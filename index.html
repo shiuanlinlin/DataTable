@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataTable使用json帶入資料</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"
+        integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.min.js"
+        integrity="sha384-+sLIOodYLS7CIrQpBjl+C7nPvqq+FbNUBDunl/OZv93DB7Ln/533i8e/mZXLi/P+"
+        crossorigin="anonymous"></script>
+    <script src="datatables.min.js"></script>
+    <link rel="stylesheet" href="datatables.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css"
+        integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
+
+</head>
+
+<body class="p-5">
+
+    <h1>datatable表格套件</h1>
+    <p>用陣列控制一切</p>
+    <table id="table_id" class="table border table-bordered">
+    </table>
+    <script>
+        //此為說明，真實執行請看json檔案
+        let jsonDataTable =
+        {
+            "theader": [
+                { "data": "t1" },
+                { "data": "t2" },
+                { "data": "t3" },
+                { "data": "t4" }
+            ],
+            "tbody": [
+                {
+                    "t1": "1",
+                    "t2": "2",
+                    "t3": "3",
+                    "t4": "4"
+                },
+                {
+                    "t1": "5",
+                    "t2": "6",
+                    "t3": "7",
+                    "t4": "8",
+                    "rowspan": 2, //直向合併格數，合併兩格輸入2
+                    "rowspan_index": 2,//從第幾格開始執行，例如 t2 合併 下一行的 t2
+                    "class": "text-left"//在合併的那格添加class
+                },
+                {
+                    "t1": "9",
+                    "t2": "10",
+                    "t3": "11",
+                    "t4": "12"
+                },
+                {
+                    "t1": "13",
+                    "t2": "14",
+                    "t3": "15",
+                    "t4": "16"
+                },
+                {
+                    "t1": "17",
+                    "t2": "18",
+                    "t3": "19",
+                    "t4": "20",
+                    "colspan": 2,//橫向合併格數
+                    "colspan_index": 2,//從第幾格開始執行，例如 t2 合併 t3
+                    "class": "text-left"//在合併的那格添加class
+                }
+            ]
+
+        };
+
+        $(document).ready(function(){
+            $.ajax({
+                type: 'GET',
+                url: 'table.json',
+                success: function(data) {
+                    TableDataShow('table_id',data);
+                },
+                error: function(error) {
+                    console.log(error);
+                },
+            });
+        });
+
+
+
+        function TableDataShow(id,json) {
+            // 如果合併就以t1的資料為主
+            let rowspan_num = 0; //rowspan是否還有要移除的欄位
+            let rowspan_index = 0; //rowspan要從第幾格開始處理
+            let colspan_num = 0; //colspan是否還有要移除的欄位
+            let colspan_index = 0; //colspan要從第幾格開始處理
+
+            //1.先建立 thead
+            //thead 產生
+            const table = $(`#${id}`);
+            let theader_json = json.theader;
+            let theader_length = theader_json.length;
+            let theader_th = '';
+            //建立內容
+            theader_json.forEach(item => {
+                theader_th += `
+                    <th>${item.data}</th>
+                `;
+            });
+            //組裝
+            let theader_html = `
+                <thead>
+                    <tr>
+                        ${theader_th}
+                    </tr>
+                </thead>
+            `;
+            //放入table
+            table.html(theader_html);
+
+            //2.tbody產生( 搭配套件 DataTable )
+            $(`#${id}`).DataTable({
+                data: json.tbody, //內容
+                columns: json.theader, //標題
+                searching: false, //搜尋
+                paging: false, //分頁功能
+                ordering: false, //排序
+                info: false, //目前頁數的顯示
+                createdRow: function (row, data, dataIndex) {
+
+                    //抓到下一行表格要再處理，清除不必要的欄位
+                    if (rowspan_num != 0) {
+                        $(row).find(`td:eq(${rowspan_index})`).remove();
+                        //處理完成，不需要再處理縱列
+                        rowspan_num = rowspan_num - 1;
+                    }
+
+                    if (data.rowspan && data.rowspan > 1 && rowspan_num == 0) {
+                        //1.先設定合併的縱列有幾個，在下一個tr處理完後結束工作
+                        rowspan_num = data.rowspan - 1;
+                        //2.判斷是第幾列需要合併
+                        rowspan_index = data.rowspan_index - 1;
+                        console.log('rowspan_index: ' + rowspan_index);
+                        //3.將規則寫上去
+                        $(row).find(`td:eq(${rowspan_index})`).attr('rowspan', data.rowspan);
+                        //4.如果有寫 class
+                        if (data.class) {
+                            $(row).find(`td:eq(${rowspan_index})`).addClass(data.class);
+                        }
+
+                    }
+
+                    //橫向合併
+                    if (data.colspan && data.colspan > 1) {
+                        //1.取得有多少 child
+                        let td = row.children;
+                        //2.計算是第幾個要處理
+                        colspan_index = Number(data.colspan_index) - 1;
+
+                        //3.利用所有數量跑回圈
+                        for (let i = 0; i < td.length; i++) {
+                            //5.如果有需要移除被合併的td或th
+                            if (colspan_num != 0) {
+                                $(row).find(`td:eq(${i})`).remove();
+                                //每次處理都扣 1 ，表示該處理的已經完成
+                                colspan_num = colspan_num - 1;
+                            }
+
+                            //找到需要設定的td或th
+                            if (i == colspan_index) {
+                                //計算有多少的td要移除
+                                colspan_num = Number(data.colspan) - 1;
+                                $(row).find(`td:eq(${i})`).attr('colspan', data.colspan);
+                                //4.如果有寫 class
+                                if (data.class) {
+                                    $(row).find(`td:eq(${i})`).addClass(data.class);
+                                }
+                            }
+
+                        }
+                    }
+
+                }
+            });
+        }
+
+
+    </script>
+</body>
+
+</html>
