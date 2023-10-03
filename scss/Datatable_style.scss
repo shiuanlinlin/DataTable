@@ -1,0 +1,34 @@
+.DataTableStyle{
+    th,td{
+        padding: 0;
+    }
+    th input,td input{
+        border: 0;
+        width: 95%;
+        padding: 0.75rem;
+    }
+    td input{
+        width: 100%;
+    }
+    .backend_menu{
+        display: flex;
+        align-items: center;
+        button{
+            background: none;
+            border: 0;
+            img{
+                &.dropdown_menuicon{
+                    width: 5px;
+                    opacity: 0.3;
+                }
+                &.dropdown_righticon{
+                    width: 18px;
+                    opacity: 0.8;
+                }
+            }
+            &.dropdown-toggle::after{
+                display: none;
+            }
+        }
+    }
+}

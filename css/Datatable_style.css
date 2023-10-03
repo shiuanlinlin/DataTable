@@ -1,0 +1,30 @@
+.DataTableStyle th, .DataTableStyle td {
+  padding: 0;
+}
+.DataTableStyle th input, .DataTableStyle td input {
+  border: 0;
+  width: 95%;
+  padding: 0.75rem;
+}
+.DataTableStyle td input {
+  width: 100%;
+}
+.DataTableStyle .backend_menu {
+  display: flex;
+  align-items: center;
+}
+.DataTableStyle .backend_menu button {
+  background: none;
+  border: 0;
+}
+.DataTableStyle .backend_menu button img.dropdown_menuicon {
+  width: 5px;
+  opacity: 0.3;
+}
+.DataTableStyle .backend_menu button img.dropdown_righticon {
+  width: 18px;
+  opacity: 0.8;
+}
+.DataTableStyle .backend_menu button.dropdown-toggle::after {
+  display: none;
+}

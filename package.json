@@ -1,0 +1,17 @@
+{
+  "dependencies": {
+    "bootstrap-icons": "^1.10.5",
+    "gulp": "^4.0.2",
+    "gulp-postcss": "^9.0.1",
+    "gulp-sass": "^5.1.0",
+    "gulp-scss": "^1.4.0",
+    "gulp-watch": "^5.0.1",
+    "node-sass": "^9.0.0",
+    "sass": "^1.63.6",
+    "watch": "^1.0.2"
+  },
+  "devDependencies": {
+    "postcss": "^8.4.26",
+    "postcss-preset-env": "^9.0.0"
+  }
+}
