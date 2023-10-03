@@ -114,7 +114,7 @@ function TableDataShow(id,json,status) {
     let colspan_num = 0; //colspan是否還有要移除的欄位
     let colspan_index = 0; //colspan要從第幾格開始處理
 
-    //2.功能選單(後台用)
+    //2.theader功能選單(後台用)
     let menuTool = `
         <div class="dropdown">
             <button class="dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false">
@@ -128,6 +128,25 @@ function TableDataShow(id,json,status) {
                 <button type="button" data-table="del_field" class="dropdown-item">
                     <img src="./img/xmark-solid.svg" class="dropdown_delicon" alt="移除此欄位">
                     移除此欄位
+                </button>
+            </div>
+        </div>
+    `;
+
+    //2-1.tbody功能選單(後台用)
+    let tbodymenuTool = `
+        <div class="dropdown">
+            <button class="dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false">
+                <img src="./img/ellipsis-vertical-solid.svg" class="dropdown_menuicon">
+            </button>
+            <div class="dropdown-menu">
+                <button type="button" data-table="bottom_add" class="dropdown-item">
+                    <img src="./img/down-long-solid.svg" class="dropdown_righticon" alt="向下新增一列">
+                    向下新增一列
+                </button>
+                <button type="button" data-table="del_column" class="dropdown-item">
+                    <img src="./img/xmark-solid.svg" class="dropdown_delicon" alt="移除此列">
+                    移除此列
                 </button>
             </div>
         </div>
@@ -180,7 +199,7 @@ function TableDataShow(id,json,status) {
                 //後台生成給予input
                 if(status == 'backend')
                 {
-                    $(td).html('<input type="text" value="' + cellData + '">');
+                    $(td).html('<div class="backend_menu"><input type="text" value="' + cellData + '">'+tbodymenuTool+'</div>');
                 }
             },
         }],
@@ -201,7 +220,6 @@ function TableDataShow(id,json,status) {
                 //3.將規則寫上去
                 $(row).find(`td:eq(${rowspan_index})`).attr('rowspan', data.rowspan);
                 $(row).find(`td:eq(${rowspan_index})`).attr('rowspan_index', rowspan_index);
-                $(row).find(`td:eq(${rowspan_index})`).attr('rowspan_old', data.rowspan_old);
 
                 //4.如果有寫 class
                 if (data.class) {
@@ -232,7 +250,6 @@ function TableDataShow(id,json,status) {
                         colspan_num = Number(data.colspan) - 1;
                         $(row).find(`td:eq(${i})`).attr('colspan', data.colspan);
                         $(row).find(`td:eq(${i})`).attr('colspan_index', data.colspan_index);
-                        $(row).find(`td:eq(${i})`).attr('colspan_old', data.colspan_old);
                         //4.如果有寫 class
                         if (data.class) {
                             $(row).find(`td:eq(${i})`).addClass(data.class);
@@ -320,6 +337,22 @@ function DataTableOtherButton(id,tableid)
                         });
                     }
 
+                    break;
+                //向下新增一列
+                case 'bottom_add':
+                    //(1.)取得目前所在td位置
+                    let tdposition = target.parentElement.parentElement.parentElement.parentElement;
+                    //(2.)取得目前所在tr
+                    let trposition = tdposition.parentElement;
+                    //(3.) tr 是第幾個
+                    let tbody = Table.querySelector('tbody');
+                    let tbody_tr = tbody.querySelectorAll('tr');
+                    const tr_index = Array.prototype.indexOf.call(tbody_tr, trposition);
+                    //(4.) td 是第幾個
+                    let tbody_td = trposition.querySelectorAll('td');
+                    const td_index = Array.prototype.indexOf.call(tbody_td, tdposition);
+                    //新增列表
+                    AddRowTableShow(Table,tbody_tr,tdposition,tr_index,td_index);
                     break;
             }
         });
@@ -591,7 +624,7 @@ function TableDelFieldTheader(thparents,liIndex)
         return true
     }catch(e)
     {
-        console.error("移除表頭 TableDelFieldTheader() 發生錯誤，請檢查");
+        console.error("移除表頭欄位 TableDelFieldTheader() 發生錯誤，請檢查");
         return false
     }
 }
@@ -655,12 +688,146 @@ function TableDelFieldTbody(Table,liIndex)
         return true
     }catch(e)
     {
-        console.error("移除表格 TableDelFieldTbody() 發生錯誤，請檢查");
+        console.error("移除內容欄位 TableDelFieldTbody() 發生錯誤，請檢查");
         return false
     }
 
 }
 
+
+//新增列表
+async function AddRowTableShow(Table,tbody_tr,tdposition,tr_index,td_index)
+{
+    let promise1 = await new Promise((resolve,reject)=>{
+        //新增列表 - 處理表頭
+        let TableHeader = TableAddRowTheader(Table);
+        if(TableHeader)
+        {
+            resolve('add_row_header_ok');
+        }
+    });
+
+    let promise2 = await new Promise((resolve,reject)=>{
+        //新增列表 - 處理表頭
+        let TableBody = TableAddRowTbody(Table,tbody_tr,tdposition,tr_index,td_index);
+        if(TableBody)
+        {
+            resolve('Finish');
+        }
+    });
+
+    let promise3 = await new Promise((resolve,reject)=>{
+        //測試功能
+        if(demotest_start)
+        {
+            //測試生成次數
+            if(demotest == 1)
+            {
+                DataTableShow.destroy();
+                TableDataShow('table_id',newjson,'backend');
+                demotest = demotest - 1;
+                resolve('json');
+            }
+        }
+        else
+        {
+            //生成表格(正式)
+            DataTableShow.destroy();
+            TableDataShow('table_id',newjson,'backend');
+        }
+    });
+
+    //測試功能：產生json(注意此為測試用)
+    let promise4 = await new Promise((resolve,reject)=>{
+        var currentData = DataTableShow.rows().data().toArray();
+        var jsonData = JSON.stringify(currentData);
+        console.log('測試模式開啟！請注意');
+    });
+}
+
+//新增列表 - 處理表頭
+function TableAddRowTheader(Table)
+{
+    try{
+        //(1.)先抓取目前的表頭(雖然只有列表新增，但還是要抓頁面上的值)
+        let theader_array = [];
+        let theadername_array = [];
+        let thead = Table.querySelector('thead');
+        let thead_td = thead.querySelectorAll('th');
+
+        let i=0;
+        thead_td.forEach(item=>{
+            theader_array[i] = {"data": "t"+(i+1)};
+            i++
+        });
+
+        let j = 0;
+        thead_td.forEach(item=>{
+            theadername_array[j] = {"name": item.querySelector('input').value};
+            j++
+        });
+
+        newjson['theader'] = theader_array;
+        newjson['theader_name'] = theadername_array;
+        console.log(newjson);
+        return true
+    }catch(e)
+    {
+        console.error("新增一列輸出表頭 TableAddRowTheader() 發生錯誤，請檢查");
+        return false
+    }
+}
+
+//新增列表 - 處理表頭
+function TableAddRowTbody(Table,tbody_tr,tdposition,tr_index,td_index)
+{
+    try{
+        //(1.) 先將所有資料存入陣列
+        let tbody_tr_array = [];
+        let td_array = [];
+        let tbody_array = [];
+
+        //取得td長度，怕有合併格的問題，所以取原始資料
+        const td_length = newjson.theader.length;
+        //將頁面資料整理起來
+        for(let i=0; i<tbody_tr.length; i++)
+        {
+            for(let j=0; j<td_length; j++)
+            {
+                td_array[j] = tbody_tr[i].querySelectorAll('td')[j].querySelector('input').value;
+            }
+
+            tbody_tr_array[i] = td_array;
+            td_array = [];
+        }
+
+        console.log(tbody_tr_array);
+        //(2.)處理新增加的資料
+        let Add_array = tbody_tr_array[tr_index];
+        //(3.)將他插入
+        tbody_tr_array.splice(tr_index,0,Add_array);
+        //(4.)將資料整理成正確json
+        for(let i=0; i<tbody_tr_array.length;i++)
+        {
+            const obj = {};
+            for(let j=0; j<tbody_tr_array[i].length;j++)
+            {
+                const key = "t"+(j+1);
+                obj[key] = tbody_tr_array[i][j];
+            }
+            tbody_array[i] = obj;
+        }
+
+        newjson['tbody'] = tbody_array;
+        console.log(newjson);
+        return true
+    }
+    catch(e)
+    {
+        console.error("新增一列內容 TableAddRowTbody() 發生錯誤，請檢查");
+        return false
+    }
+}
 
 
 //輸出json
