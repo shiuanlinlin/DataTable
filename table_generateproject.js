@@ -73,6 +73,9 @@ let demotest = 1;
 //測試功能是否開啟
 let demotest_start = false;
 
+//判斷到有合併格
+let rowspan_array = [];
+
 
 //頁籤
 //1.生成表格
@@ -219,7 +222,7 @@ function TableDataShow(id,json,status) {
                 rowspan_index = data.rowspan_index - 1;
                 //3.將規則寫上去
                 $(row).find(`td:eq(${rowspan_index})`).attr('rowspan', data.rowspan);
-                $(row).find(`td:eq(${rowspan_index})`).attr('rowspan_index', rowspan_index);
+                $(row).find(`td:eq(${rowspan_index})`).attr('rowspan_index', data.rowspan_index);
 
                 //4.如果有寫 class
                 if (data.class) {
@@ -452,6 +455,20 @@ async function TableAddFieldTbody(Table,liIndex)
         let add_array = [];
         let add_td = [];
         let tbody_array = [];
+        //看是否有合併欄位的資料，如果有，需要先加進去
+        if(rowspan_array.length > 0)
+        {
+            rowspan_array.forEach(item=>{
+                let tr_index = item.tr_index;
+                const obj = {};
+                obj['rowspan'] = item.rowspan;
+                obj['rowspan_index'] = item.rowspan_index;
+                TableTbodyData_array[tr_index].push(obj);
+            });
+            //處理完成清空
+            rowspan_array = [];
+        }
+
         //取得每欄位的 t2
         for(let i=0; i<TableTbodyData_array.length; i++)
         {
@@ -467,11 +484,16 @@ async function TableAddFieldTbody(Table,liIndex)
             add_td = [];
         }
 
+
+
         //將資料加進去
         for(let i=0; i<TableTbodyData_array.length; i++)
         {
             TableTbodyData_array[i].splice(liIndex, 0, add_array[i][liIndex]);
         }
+
+        //取得正常的 td 長度
+        let length = newjson.theader.length;
 
         //整理資料
         for(let i=0; i<TableTbodyData_array.length; i++)
@@ -479,101 +501,33 @@ async function TableAddFieldTbody(Table,liIndex)
             const obj = {};
             for(let j=0; j<TableTbodyData_array[i].length; j++)
             {
-                const key = "t" + (j+1);
-                obj[key] = TableTbodyData_array[i][j];
+                if( (j+1) <= length )
+                {
+                    const key = "t" + (j+1);
+                    obj[key] = TableTbodyData_array[i][j];
+                }
+
+                if( (j+1) > length ){
+                    //多餘的資料檢查，如果有合併欄位資訊就寫進去
+                    if(TableTbodyData_array[i][j].rowspan)
+                    {
+                        obj["rowspan"] = TableTbodyData_array[i][j].rowspan;
+                        obj["rowspan_index"] = TableTbodyData_array[i][j].rowspan_index;
+                    }
+                }
             }
             tbody_array[i] = obj;
         }
 
-        console.log(tbody_array);
+        console.log("最終資料");
         newjson['tbody'] = tbody_array;
+        console.log(newjson);
         return true
     }catch(e)
     {
         console.error('表格內容生成失敗，請檢查 TableAddFieldTbody()');
         return false;
     }
-
-
-    // try {
-    //     let tbody_array = [];
-    //     //(1.) 取得tbody有多少列
-    //     let tbody = Table.querySelector('tbody');
-    //     let tbody_tr = tbody.querySelectorAll('tr');
-    //     //(2.) 產生一排tbody 內容
-    //     //每個資料都退1(需要處理幾次)
-    //     let number = 0;
-    //     let rowspan_data = ''; //有合併的狀況發生
-    //     let rowspan_number = 0; //有合併的狀況發生
-
-    //     for(let j=0; j<tbody_tr.length; j++)
-    //     {
-    //         const obj = {};
-    //         const rowspan = {};
-    //         //取得td
-    //         let tbodytds = tbody_tr[j].querySelectorAll('td');
-    //         let length = newjson.theader.length;
-    //         for(let i=0; i<length; i++)
-    //         {
-    //         if(number == 0)
-    //             {
-    //                 let key = "t" + Number(i + 1);
-    //                 let index = tbodytds[i] ? i : (i - 1 ) >= 0 ? (i-1) : 0;
-    //                 if(rowspan_number > 0)
-    //                 {
-    //                     obj[key] = rowspan_data;
-    //                     rowspan_number = rowspan_number - 1;
-    //                 }
-    //                 else
-    //                 {
-    //                     obj[key] = tbodytds[index].querySelector('input').value;
-    //                 }
-
-    //                 //判斷是否有合併儲存格
-    //                 if(tbodytds[index].getAttribute('rowspan') > 1)
-    //                 {
-    //                     let key2 = "rowspan";
-    //                     obj[key2] = tbodytds[index].getAttribute('rowspan');
-    //                     let key3 = "rowspan_index";
-    //                     obj[key3] = tbodytds[index].getAttribute('rowspan_index');
-    //                     rowspan_number = 1;
-    //                     rowspan_data = tbodytds[index].getAttribute('rowspan_old');
-    //                     rowspan_key = key;
-    //                 }
-
-    //                 //判斷是否有合併儲存格
-    //                 if(tbodytds[index].getAttribute('colspan') > 1)
-    //                 {
-    //                     let key2 = "colspan";
-    //                     obj[key2] = tbodytds[index].getAttribute('colspan');
-    //                     let key3 = "colspan_index";
-    //                     obj[key3] = tbodytds[index].getAttribute('colspan_index');
-    //                 }
-
-    //                 if(liIndex == i && number == 0)
-    //                 {
-    //                     //發生之後就不可以為0，因為添加資料都會讀前一筆
-    //                     //已theader 預設 t1~t6 長度為主
-    //                     number = jsonDataTable.theader.length;
-    //                 }
-    //             }else  if(number > 0){
-    //                 let key = "t" + Number(i + 1);
-    //                 let index = (i - 1 ) >= 0 ? (i-1) : 0;
-    //                 obj[key] = tbodytds[index].querySelector('input').value;
-    //                 number = number - 1;
-    //             }
-
-    //         }
-    //         tbody_array[j] = obj;
-    //     }
-
-    //     newjson['tbody'] = tbody_array;
-    //     console.log(newjson);
-    //     return true;
-    // } catch (e) {
-    //     console.error('表格內容生成失敗，請檢查 TableAddFieldTbody()');
-    //     return false;
-    // }
 }
 
 
@@ -710,7 +664,6 @@ function TableDelFieldTheader(thparents,liIndex)
 
         newjson['theader'] = theader_array;
         newjson['theader_name'] = theadername_array;
-        console.log(newjson);
         return true
     }catch(e)
     {
@@ -774,7 +727,6 @@ function TableDelFieldTbody(Table,liIndex)
             tbody_array[i] = obj;
         }
         newjson['tbody'] = tbody_array;
-        console.log(newjson);
         return true
     }catch(e)
     {
@@ -860,7 +812,6 @@ function TableAddRowTheader(Table)
 
         newjson['theader'] = theader_array;
         newjson['theader_name'] = theadername_array;
-        console.log(newjson);
         return true
     }catch(e)
     {
@@ -892,8 +843,6 @@ function TableAddRowTbody(tbody_tr,tr_index,status)
             td_array = [];
         }
 
-        console.log(tbody_tr_array);
-
         //如果是要新增加一列
         if(status == 'add')
         {
@@ -922,7 +871,6 @@ function TableAddRowTbody(tbody_tr,tr_index,status)
         }
 
         newjson['tbody'] = tbody_array;
-        console.log(newjson);
         return true
     }
     catch(e)
@@ -999,20 +947,72 @@ function TableTbodyData(Table)
         let field = DataTableShow.columns().count();
         //取得目前是幾列
         let row = DataTableShow.rows().count();
+
+        //判斷是否要開始讀前一個資料
+        let number = 0;
+
+        //合併資料
+        let rowspan_data = [];
+
         //先取得頁面舊資料
         for(let i=0; i<row; i++)
         {
-            for(let j=0; j<field; j++)
+            //有合併欄位，下一項要處理
+            if(number > 0)
             {
-                const td_tag = tbody_tr[i].querySelectorAll('td')[j];
-                const td_input = td_tag.querySelector('input').value;
-                tbody_td_array.push(td_input)
+                for(let j=0; j<field; j++)
+                {
+                    //有合併的資料需要讀前一項
+                    let index = (j-1) > -1 ? (j-1) : 0;
+                    const td_tag = tbody_tr[i].querySelectorAll('td')[index];
+                    let td_input = td_tag.querySelector('input').value;
+                    tbody_td_array.push(td_input);
+                }
+                //處理完這一行，取消
+                number = number - 1;
             }
+
+            //沒有合併欄位
+            if(number == 0)
+            {
+                for(let j=0; j<field; j++)
+                {
+                    const td_tag = tbody_tr[i].querySelectorAll('td')[j];
+                    if(td_tag)
+                    {
+                        let td_input = td_tag.querySelector('input').value;
+                        tbody_td_array.push(td_input);
+
+                        //判斷是否有合併欄位
+                        if(td_tag.getAttribute('rowspan') > 1)
+                        {
+                            //有的話紀錄進去
+                            rowspan_data['tr_index'] = i;
+                            rowspan_data['td_index'] = j;
+                            rowspan_data['rowspan'] = td_tag.getAttribute('rowspan');
+                            rowspan_data['rowspan_index'] = td_tag.getAttribute('rowspan_index');
+                            rowspan_array.push(rowspan_data);
+                            number = Number(td_tag.getAttribute('rowspan')) - 1;
+                            //使用完，清空
+                            rowspan_data = [];
+                        }
+                    }
+                    else
+                    {
+                        tbody_td_array.push('這不應該發生');
+                    }
+                }
+
+            }
+
             tbody_tr_array[i] = tbody_td_array;
             //清空
             tbody_td_array = [];
         }
+        console.log("資料取得");
         console.log(tbody_tr_array);
+        console.log("合併資料取得");
+        console.log(rowspan_array);
         return tbody_tr_array;
     }
     catch(e)
