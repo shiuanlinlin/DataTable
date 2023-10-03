@@ -354,6 +354,48 @@ function DataTableOtherButton(id,tableid)
                     //新增列表
                     AddRowTableShow(Table,tbody_tr,tdposition,tr_index,td_index);
                     break;
+                case 'del_column':
+                    //取得目前是幾欄位
+                    let row_number = DataTableShow.rows().count();
+                    if(row_number == 1)
+                    {
+                        swal({
+                            title: "只剩下一列！無法移除",
+                            text: "如需修改資料請操作表格上的功能",
+                            icon: "warning",
+                            buttons: true,
+                            dangerMode: true,
+                        });
+                    }
+                    else
+                    {
+                        swal({
+                            title: "確認要移除此列?",
+                            text: "刪除此列包含整列資料將都被移除，請再次確認!",
+                            icon: "warning",
+                            buttons: true,
+                            dangerMode: true,
+                        })
+                        .then((willDelete) => {
+                            if (willDelete) {
+
+                                //(1.)取得目前所在td位置
+                                let tdposition = target.parentElement.parentElement.parentElement.parentElement;
+                                //(2.)取得目前所在tr
+                                let trposition = tdposition.parentElement;
+                                //(3.) tr 是第幾個
+                                let tbody = Table.querySelector('tbody');
+                                let tbody_tr = tbody.querySelectorAll('tr');
+                                const tr_index = Array.prototype.indexOf.call(tbody_tr, trposition);
+                                //(4.) td 是第幾個
+                                let tbody_td = trposition.querySelectorAll('td');
+                                const td_index = Array.prototype.indexOf.call(tbody_td, tdposition);
+                                //移除列
+                                DelRowTableShow(Table,tbody_tr,tr_index);
+                            }
+                        });
+                    }
+                    break;
             }
         });
     }
@@ -403,87 +445,135 @@ function TableAddFieldTheader(thparents,liIndex)
 }
 
 //4.生成內容
-function TableAddFieldTbody(Table,liIndex)
+async function TableAddFieldTbody(Table,liIndex)
 {
     try {
+        let TableTbodyData_array = TableTbodyData(Table);
+        let add_array = [];
+        let add_td = [];
         let tbody_array = [];
-        //(1.) 取得tbody有多少列
-        let tbody = Table.querySelector('tbody');
-        let tbody_tr = tbody.querySelectorAll('tr');
-        //(2.) 產生一排tbody 內容
-        //每個資料都退1(需要處理幾次)
-        let number = 0;
-        let rowspan_data = ''; //有合併的狀況發生
-        let rowspan_number = 0; //有合併的狀況發生
-
-        for(let j=0; j<tbody_tr.length; j++)
+        //取得每欄位的 t2
+        for(let i=0; i<TableTbodyData_array.length; i++)
         {
-            const obj = {};
-            const rowspan = {};
-            //取得td
-            let tbodytds = tbody_tr[j].querySelectorAll('td');
-            let length = newjson.theader.length;
-            for(let i=0; i<length; i++)
+            for(let j=0; j<TableTbodyData_array[i].length; j++)
             {
-            if(number == 0)
+                if(j == liIndex)
                 {
-                    let key = "t" + Number(i + 1);
-                    let index = tbodytds[i] ? i : (i - 1 ) >= 0 ? (i-1) : 0;
-                    if(rowspan_number > 0)
-                    {
-                        obj[key] = rowspan_data;
-                        rowspan_number = rowspan_number - 1;
-                    }
-                    else
-                    {
-                        obj[key] = tbodytds[index].querySelector('input').value;
-                    }
-
-                    //判斷是否有合併儲存格
-                    if(tbodytds[index].getAttribute('rowspan') > 1)
-                    {
-                        let key2 = "rowspan";
-                        obj[key2] = tbodytds[index].getAttribute('rowspan');
-                        let key3 = "rowspan_index";
-                        obj[key3] = tbodytds[index].getAttribute('rowspan_index');
-                        rowspan_number = 1;
-                        rowspan_data = tbodytds[index].getAttribute('rowspan_old');
-                        rowspan_key = key;
-                    }
-
-                    //判斷是否有合併儲存格
-                    if(tbodytds[index].getAttribute('colspan') > 1)
-                    {
-                        let key2 = "colspan";
-                        obj[key2] = tbodytds[index].getAttribute('colspan');
-                        let key3 = "colspan_index";
-                        obj[key3] = tbodytds[index].getAttribute('colspan_index');
-                    }
-
-                    if(liIndex == i && number == 0)
-                    {
-                        //發生之後就不可以為0，因為添加資料都會讀前一筆
-                        //已theader 預設 t1~t6 長度為主
-                        number = jsonDataTable.theader.length;
-                    }
-                }else  if(number > 0){
-                    let key = "t" + Number(i + 1);
-                    let index = (i - 1 ) >= 0 ? (i-1) : 0;
-                    obj[key] = tbodytds[index].querySelector('input').value;
-                    number = number - 1;
+                    add_td[j] = TableTbodyData_array[i][j];
                 }
 
             }
-            tbody_array[j] = obj;
+            add_array[i] = add_td;
+            add_td = [];
         }
 
+        //將資料加進去
+        for(let i=0; i<TableTbodyData_array.length; i++)
+        {
+            TableTbodyData_array[i].splice(liIndex, 0, add_array[i][liIndex]);
+        }
+
+        //整理資料
+        for(let i=0; i<TableTbodyData_array.length; i++)
+        {
+            const obj = {};
+            for(let j=0; j<TableTbodyData_array[i].length; j++)
+            {
+                const key = "t" + (j+1);
+                obj[key] = TableTbodyData_array[i][j];
+            }
+            tbody_array[i] = obj;
+        }
+
+        console.log(tbody_array);
         newjson['tbody'] = tbody_array;
-        console.log(newjson);
-        return true;
-    } catch (e) {
+        return true
+    }catch(e)
+    {
         console.error('表格內容生成失敗，請檢查 TableAddFieldTbody()');
         return false;
     }
+
+
+    // try {
+    //     let tbody_array = [];
+    //     //(1.) 取得tbody有多少列
+    //     let tbody = Table.querySelector('tbody');
+    //     let tbody_tr = tbody.querySelectorAll('tr');
+    //     //(2.) 產生一排tbody 內容
+    //     //每個資料都退1(需要處理幾次)
+    //     let number = 0;
+    //     let rowspan_data = ''; //有合併的狀況發生
+    //     let rowspan_number = 0; //有合併的狀況發生
+
+    //     for(let j=0; j<tbody_tr.length; j++)
+    //     {
+    //         const obj = {};
+    //         const rowspan = {};
+    //         //取得td
+    //         let tbodytds = tbody_tr[j].querySelectorAll('td');
+    //         let length = newjson.theader.length;
+    //         for(let i=0; i<length; i++)
+    //         {
+    //         if(number == 0)
+    //             {
+    //                 let key = "t" + Number(i + 1);
+    //                 let index = tbodytds[i] ? i : (i - 1 ) >= 0 ? (i-1) : 0;
+    //                 if(rowspan_number > 0)
+    //                 {
+    //                     obj[key] = rowspan_data;
+    //                     rowspan_number = rowspan_number - 1;
+    //                 }
+    //                 else
+    //                 {
+    //                     obj[key] = tbodytds[index].querySelector('input').value;
+    //                 }
+
+    //                 //判斷是否有合併儲存格
+    //                 if(tbodytds[index].getAttribute('rowspan') > 1)
+    //                 {
+    //                     let key2 = "rowspan";
+    //                     obj[key2] = tbodytds[index].getAttribute('rowspan');
+    //                     let key3 = "rowspan_index";
+    //                     obj[key3] = tbodytds[index].getAttribute('rowspan_index');
+    //                     rowspan_number = 1;
+    //                     rowspan_data = tbodytds[index].getAttribute('rowspan_old');
+    //                     rowspan_key = key;
+    //                 }
+
+    //                 //判斷是否有合併儲存格
+    //                 if(tbodytds[index].getAttribute('colspan') > 1)
+    //                 {
+    //                     let key2 = "colspan";
+    //                     obj[key2] = tbodytds[index].getAttribute('colspan');
+    //                     let key3 = "colspan_index";
+    //                     obj[key3] = tbodytds[index].getAttribute('colspan_index');
+    //                 }
+
+    //                 if(liIndex == i && number == 0)
+    //                 {
+    //                     //發生之後就不可以為0，因為添加資料都會讀前一筆
+    //                     //已theader 預設 t1~t6 長度為主
+    //                     number = jsonDataTable.theader.length;
+    //                 }
+    //             }else  if(number > 0){
+    //                 let key = "t" + Number(i + 1);
+    //                 let index = (i - 1 ) >= 0 ? (i-1) : 0;
+    //                 obj[key] = tbodytds[index].querySelector('input').value;
+    //                 number = number - 1;
+    //             }
+
+    //         }
+    //         tbody_array[j] = obj;
+    //     }
+
+    //     newjson['tbody'] = tbody_array;
+    //     console.log(newjson);
+    //     return true;
+    // } catch (e) {
+    //     console.error('表格內容生成失敗，請檢查 TableAddFieldTbody()');
+    //     return false;
+    // }
 }
 
 
@@ -708,8 +798,8 @@ async function AddRowTableShow(Table,tbody_tr,tdposition,tr_index,td_index)
     });
 
     let promise2 = await new Promise((resolve,reject)=>{
-        //新增列表 - 處理表頭
-        let TableBody = TableAddRowTbody(Table,tbody_tr,tdposition,tr_index,td_index);
+        //新增列表 - 處理內容
+        let TableBody = TableAddRowTbody(tbody_tr,tr_index,'add');
         if(TableBody)
         {
             resolve('Finish');
@@ -745,7 +835,8 @@ async function AddRowTableShow(Table,tbody_tr,tdposition,tr_index,td_index)
     });
 }
 
-//新增列表 - 處理表頭
+
+//新增列表 - 處理表頭(新增與移除共用，因為表頭不會被影響)
 function TableAddRowTheader(Table)
 {
     try{
@@ -778,8 +869,8 @@ function TableAddRowTheader(Table)
     }
 }
 
-//新增列表 - 處理表頭
-function TableAddRowTbody(Table,tbody_tr,tdposition,tr_index,td_index)
+//新增列表 - 處理內容
+function TableAddRowTbody(tbody_tr,tr_index,status)
 {
     try{
         //(1.) 先將所有資料存入陣列
@@ -802,10 +893,22 @@ function TableAddRowTbody(Table,tbody_tr,tdposition,tr_index,td_index)
         }
 
         console.log(tbody_tr_array);
-        //(2.)處理新增加的資料
-        let Add_array = tbody_tr_array[tr_index];
-        //(3.)將他插入
-        tbody_tr_array.splice(tr_index,0,Add_array);
+
+        //如果是要新增加一列
+        if(status == 'add')
+        {
+            //(2.)處理新增加的資料
+            let Add_array = tbody_tr_array[tr_index];
+            //(3.)將他插入
+            tbody_tr_array.splice(tr_index,0,Add_array);
+        }
+
+         //如果是要移除一列
+         if(status == 'del')
+         {
+            tbody_tr_array.splice(tr_index,1);
+         }
+
         //(4.)將資料整理成正確json
         for(let i=0; i<tbody_tr_array.length;i++)
         {
@@ -827,6 +930,97 @@ function TableAddRowTbody(Table,tbody_tr,tdposition,tr_index,td_index)
         console.error("新增一列內容 TableAddRowTbody() 發生錯誤，請檢查");
         return false
     }
+}
+
+
+//移除列
+async function DelRowTableShow(Table,tbody_tr,tr_index)
+{
+    let promise1 = await new Promise((resolve,reject)=>{
+        //移除列表 - 處理表頭
+        let TableHeader = TableAddRowTheader(Table);
+        if(TableHeader)
+        {
+            resolve('del_row_header_ok');
+        }
+    });
+
+    let promise2 = await new Promise((resolve,reject)=>{
+        //移除列表 - 處理內容
+        let TableBody = TableAddRowTbody(tbody_tr,tr_index,'del');
+        if(TableBody)
+        {
+            resolve('Finish');
+        }
+    });
+
+    let promise3 = await new Promise((resolve,reject)=>{
+        //測試功能
+        if(demotest_start)
+        {
+            //測試生成次數
+            if(demotest == 1)
+            {
+                DataTableShow.destroy();
+                TableDataShow('table_id',newjson,'backend');
+                demotest = demotest - 1;
+                resolve('json');
+            }
+        }
+        else
+        {
+            //生成表格(正式)
+            DataTableShow.destroy();
+            TableDataShow('table_id',newjson,'backend');
+        }
+    });
+
+    //測試功能：產生json(注意此為測試用)
+    let promise4 = await new Promise((resolve,reject)=>{
+        var currentData = DataTableShow.rows().data().toArray();
+        var jsonData = JSON.stringify(currentData);
+        console.log('測試模式開啟！請注意');
+    });
+}
+
+//取得tbody資料
+function TableTbodyData(Table)
+{
+    try{
+        //1.取得表格 tr
+        let tbody = Table.querySelector('tbody');
+        let tbody_tr = tbody.querySelectorAll('tr');
+
+        //2.先存取未處理的資料
+        let tbody_tr_array = [];
+        let tbody_td_array = [];
+
+        //取得目前是幾欄位
+        let field = DataTableShow.columns().count();
+        //取得目前是幾列
+        let row = DataTableShow.rows().count();
+        //先取得頁面舊資料
+        for(let i=0; i<row; i++)
+        {
+            for(let j=0; j<field; j++)
+            {
+                const td_tag = tbody_tr[i].querySelectorAll('td')[j];
+                const td_input = td_tag.querySelector('input').value;
+                tbody_td_array.push(td_input)
+            }
+            tbody_tr_array[i] = tbody_td_array;
+            //清空
+            tbody_td_array = [];
+        }
+        console.log(tbody_tr_array);
+        return tbody_tr_array;
+    }
+    catch(e)
+    {
+        console.error("取得tbody資料失敗 TableTbodyData() 發生錯誤，請檢查");
+        return false
+    }
+
 }
 
 
