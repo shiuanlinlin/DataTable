@@ -448,7 +448,7 @@ function TableAddFieldTheader(thparents,liIndex)
 }
 
 //4.生成內容
-async function TableAddFieldTbody(Table,liIndex)
+async function TableAddFieldTbody(Table,liIndex, status)
 {
     try {
         let TableTbodyData_array = TableTbodyData(Table);
@@ -469,27 +469,38 @@ async function TableAddFieldTbody(Table,liIndex)
             rowspan_array = [];
         }
 
-        //取得每欄位的 t2
-        for(let i=0; i<TableTbodyData_array.length; i++)
+        //新增欄位使用
+        if(status = "add")
         {
-            for(let j=0; j<TableTbodyData_array[i].length; j++)
+            //取得每欄位的 t2
+            for(let i=0; i<TableTbodyData_array.length; i++)
             {
-                if(j == liIndex)
+                for(let j=0; j<TableTbodyData_array[i].length; j++)
                 {
-                    add_td[j] = TableTbodyData_array[i][j];
-                }
+                    if(j == liIndex)
+                    {
+                        add_td[j] = TableTbodyData_array[i][j];
+                    }
 
+                }
+                add_array[i] = add_td;
+                add_td = [];
             }
-            add_array[i] = add_td;
-            add_td = [];
+            //將資料加進去
+            for(let i=0; i<TableTbodyData_array.length; i++)
+            {
+                TableTbodyData_array[i].splice(liIndex, 0, add_array[i][liIndex]);
+            }
         }
 
-
-
-        //將資料加進去
-        for(let i=0; i<TableTbodyData_array.length; i++)
+        //移除欄位使用
+        if(status == 'del')
         {
-            TableTbodyData_array[i].splice(liIndex, 0, add_array[i][liIndex]);
+            //將資料移除
+            for(let i=0; i<TableTbodyData_array.length; i++)
+            {
+                TableTbodyData_array[i].splice(liIndex, 1,);
+            }
         }
 
         //取得正常的 td 長度
@@ -595,7 +606,8 @@ async function DelTableShow(Table,thparents,liIndex)
 
     let promise2 = await new Promise((resolve,reject)=>{
         //移除內容
-        let TableBody = TableDelFieldTbody(Table,liIndex);
+        //let TableBody = TableDelFieldTbody(Table,liIndex);
+        let TableBody = TableAddFieldTbody(Table,liIndex, 'del');
         if(TableBody)
         {
             resolve('Finish');
@@ -671,71 +683,6 @@ function TableDelFieldTheader(thparents,liIndex)
         return false
     }
 }
-
-//移除內容
-function TableDelFieldTbody(Table,liIndex)
-{
-    try{
-        //1.取得目前表頭的長度
-        let length = newjson.theader.length;
-        //2.取得表格 tr
-        let tbody = Table.querySelector('tbody');
-        let tbody_tr = tbody.querySelectorAll('tr');
-        let tbody_array = [];
-        let tbody_array_td = {};
-
-        //先存取未處理的資料
-        let del_tr = [];
-        let del_td = [];
-
-        //取得目前是幾欄位
-        let field = DataTableShow.columns().count();
-        //取得目前是幾列
-        let row = DataTableShow.rows().count();
-
-        //先取得頁面舊資料
-        for(let i=0; i<row; i++)
-        {
-            for(let j=0; j<field; j++)
-            {
-                const td_tag = tbody_tr[i].querySelectorAll('td')[j];
-                const td_input = td_tag.querySelector('input').value;
-                del_td.push(td_input)
-            }
-
-            del_tr[i] = del_td;
-            //清空
-            del_td = [];
-        }
-
-        //將就資料處理成新資料
-        for(let i=0; i<del_tr.length; i++)
-        {
-            del_tr[i].splice(liIndex, 1);
-        }
-
-        //將新資料寫入新的json
-        //newjson['tbody'] = tbody_array;
-        for(let i=0; i<del_tr.length; i++)
-        {
-            const obj = {};
-            for(let j=0; j<del_tr[i].length; j++)
-            {
-                const key = "t" + (j+1);
-                obj[key] = del_tr[i][j];
-            }
-            tbody_array[i] = obj;
-        }
-        newjson['tbody'] = tbody_array;
-        return true
-    }catch(e)
-    {
-        console.error("移除內容欄位 TableDelFieldTbody() 發生錯誤，請檢查");
-        return false
-    }
-
-}
-
 
 //新增列表
 async function AddRowTableShow(Table,tbody_tr,tdposition,tr_index,td_index)
@@ -1009,10 +956,6 @@ function TableTbodyData(Table)
             //清空
             tbody_td_array = [];
         }
-        console.log("資料取得");
-        console.log(tbody_tr_array);
-        console.log("合併資料取得");
-        console.log(rowspan_array);
         return tbody_tr_array;
     }
     catch(e)
