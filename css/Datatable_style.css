@@ -13,6 +13,10 @@
   display: flex;
   align-items: center;
 }
+.DataTableStyle .backend_menu .dropdown {
+  margin-left: auto;
+  padding-right: 1rem;
+}
 .DataTableStyle .backend_menu button {
   background: none;
   border: 0;

@@ -30,12 +30,11 @@ let jsonDataTable =
             "t4": "8",
             "rowspan": 2, //直向合併格數，合併兩格輸入2
             "rowspan_index": 2,//從第幾格開始執行，例如 t2 合併 下一行的 t2
-            "class": "text-left",//在合併的那格添加class,
-            "rowspan_old": "10" //保留下一個被移除的欄位(下一個t2倍合併掉，所以這裡要寫原本t2的值)
+            "class": "text-left"//在合併的那格添加class,
         },
         {
             "t1": "9",
-            "t2": "10",
+            "t2": "--", //合併資料的格子就不用保留，但還是要有這個欄位
             "t3": "11",
             "t4": "12"
         },
@@ -48,12 +47,11 @@ let jsonDataTable =
         {
             "t1": "17",
             "t2": "18",
-            "t3": "19",
+            "t3": "--", //合併資料的格子就不用保留，但還是要有這個欄位
             "t4": "20",
             "colspan": 2,//橫向合併格數
             "colspan_index": 2,//從第幾格開始執行，例如 t2 合併 t3
-            "class": "text-left",//在合併的那格添加class
-            "colspan_old": "19" //保留下一個被移除的欄位(下一個t3倍合併掉，所以這裡要寫原本t3的值)
+            "class": "text-left"//在合併的那格添加class
         }
     ]
 
@@ -127,7 +125,7 @@ function TableDataShow(id,json,status) {
                     <img src="./img/right-long-solid.svg" class="dropdown_righticon" alt="向右新增一欄">
                     向右新增一欄
                 </button>
-                <button type="button" data-table="del_add" class="dropdown-item">
+                <button type="button" data-table="del_field" class="dropdown-item">
                     <img src="./img/xmark-solid.svg" class="dropdown_delicon" alt="移除此欄位">
                     移除此欄位
                 </button>
@@ -140,7 +138,6 @@ function TableDataShow(id,json,status) {
     let theader_json = json.theader_name;
     //let theader_length = theader_json.length;
     let theader_th = '';
-
     //建立內容
     theader_json.forEach(item => {
         if(status == 'backend')
@@ -265,6 +262,7 @@ function DataTableOtherButton(id,tableid)
             {
                 //產生json
                 case "json":
+                    DataTableJsonShow();
                     break;
                 //右邊新增一欄位
                 case "right_add":
@@ -280,6 +278,48 @@ function DataTableOtherButton(id,tableid)
 
                     //生成表格
                     AddTableShow(Table,thparents,liIndex);
+                    break;
+                //移除
+                case "del_field":
+                    //取得目前是幾欄位
+                    let field = DataTableShow.columns().count();
+                    if(field == 1)
+                    {
+                        swal({
+                            title: "只剩下一欄位！無法移除",
+                            text: "如需修改資料請操作表格上的功能",
+                            icon: "warning",
+                            buttons: true,
+                            dangerMode: true,
+                        });
+                    }
+                    else
+                    {
+                        swal({
+                            title: "確認要移除此欄位?",
+                            text: "刪除此欄位包含下方資料將都被移除，請再次確認!",
+                            icon: "warning",
+                            buttons: true,
+                            dangerMode: true,
+                        })
+                        .then((willDelete) => {
+                            if (willDelete) {
+
+                                //(1.) 先取得目前所在欄位
+                                let trparent = Table.querySelector('thead tr');
+                                //(2.) 取得目前所在是第幾個
+                                //取得所有th
+                                let thparents = trparent.querySelectorAll('th');
+                                //目前是誰
+                                let thparent = target.parentElement.parentElement.parentElement.parentElement;
+                                //找出目前是第幾個
+                                const liIndex = Array.prototype.indexOf.call(thparents, thparent);
+                                //移除欄位
+                                DelTableShow(Table,thparents,liIndex);
+                            }
+                        });
+                    }
+
                     break;
             }
         });
@@ -342,7 +382,6 @@ function TableAddFieldTbody(Table,liIndex)
         let number = 0;
         let rowspan_data = ''; //有合併的狀況發生
         let rowspan_number = 0; //有合併的狀況發生
-        let rowspan_key = ''; //紀錄key
 
         for(let j=0; j<tbody_tr.length; j++)
         {
@@ -464,6 +503,164 @@ async function AddTableShow(Table,thparents,liIndex)
         console.log('測試模式開啟！請注意');
     });
 }
+
+//移除欄位
+async function DelTableShow(Table,thparents,liIndex)
+{
+    let promise1 = await new Promise((resolve,reject)=>{
+        //移除表頭
+        let TableHeader = TableDelFieldTheader(thparents,liIndex);
+        if(TableHeader)
+        {
+            resolve('del_header_ok');
+        }
+    });
+
+    let promise2 = await new Promise((resolve,reject)=>{
+        //移除內容
+        let TableBody = TableDelFieldTbody(Table,liIndex);
+        if(TableBody)
+        {
+            resolve('Finish');
+        }
+    });
+
+    let promise3 = await new Promise((resolve,reject)=>{
+        //測試功能
+        if(demotest_start)
+        {
+            //測試生成次數
+            if(demotest == 1)
+            {
+                DataTableShow.destroy();
+                TableDataShow('table_id',newjson,'backend');
+                demotest = demotest - 1;
+                resolve('json');
+            }
+        }
+        else
+        {
+            //生成表格(正式)
+            DataTableShow.destroy();
+            TableDataShow('table_id',newjson,'backend');
+        }
+    });
+
+    //測試功能：產生json(注意此為測試用)
+    let promise4 = await new Promise((resolve,reject)=>{
+        var currentData = DataTableShow.rows().data().toArray();
+        var jsonData = JSON.stringify(currentData);
+        console.log('測試模式開啟！請注意');
+    });
+}
+
+//移除表頭
+function TableDelFieldTheader(thparents,liIndex)
+{
+    try{
+        let theader_array = [];
+        let theadername_array = [];
+        let length = thparents.length - 1;
+
+        //用來移除資料使用
+        let delname = [];
+
+        //先存所有表頭內容
+        for(let i=0; i<thparents.length;i++)
+        {
+            delname.push(thparents[i].querySelector('input').value);
+        }
+
+        //移除陣列
+        delname.splice(liIndex, 1);
+        //在處理格式
+        for(let i=0; i<length;i++)
+        {
+            //規格處理
+            theader_array[i] = {"data": "t" + (i+1) };
+            //塞入表頭資料
+            const key = "name";
+            const obj = {};
+            obj[key] = delname[i];
+            theadername_array[i] = obj;
+        }
+
+        newjson['theader'] = theader_array;
+        newjson['theader_name'] = theadername_array;
+        console.log(newjson);
+        return true
+    }catch(e)
+    {
+        console.error("移除表頭 TableDelFieldTheader() 發生錯誤，請檢查");
+        return false
+    }
+}
+
+//移除內容
+function TableDelFieldTbody(Table,liIndex)
+{
+    try{
+        //1.取得目前表頭的長度
+        let length = newjson.theader.length;
+        //2.取得表格 tr
+        let tbody = Table.querySelector('tbody');
+        let tbody_tr = tbody.querySelectorAll('tr');
+        let tbody_array = [];
+        let tbody_array_td = {};
+
+        //先存取未處理的資料
+        let del_tr = [];
+        let del_td = [];
+
+        //取得目前是幾欄位
+        let field = DataTableShow.columns().count();
+        //取得目前是幾列
+        let row = DataTableShow.rows().count();
+
+        //先取得頁面舊資料
+        for(let i=0; i<row; i++)
+        {
+            for(let j=0; j<field; j++)
+            {
+                const td_tag = tbody_tr[i].querySelectorAll('td')[j];
+                const td_input = td_tag.querySelector('input').value;
+                del_td.push(td_input)
+            }
+
+            del_tr[i] = del_td;
+            //清空
+            del_td = [];
+        }
+
+        //將就資料處理成新資料
+        for(let i=0; i<del_tr.length; i++)
+        {
+            del_tr[i].splice(liIndex, 1);
+        }
+
+        //將新資料寫入新的json
+        //newjson['tbody'] = tbody_array;
+        for(let i=0; i<del_tr.length; i++)
+        {
+            const obj = {};
+            for(let j=0; j<del_tr[i].length; j++)
+            {
+                const key = "t" + (j+1);
+                obj[key] = del_tr[i][j];
+            }
+            tbody_array[i] = obj;
+        }
+        newjson['tbody'] = tbody_array;
+        console.log(newjson);
+        return true
+    }catch(e)
+    {
+        console.error("移除表格 TableDelFieldTbody() 發生錯誤，請檢查");
+        return false
+    }
+
+}
+
 
 
 //輸出json
