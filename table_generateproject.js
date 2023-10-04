@@ -171,6 +171,14 @@ function TableDataShow(id,json,status) {
                     <img src="./img/down-long-solid.svg" class="dropdown_righticon" alt="向下新增一列">
                     向下新增一列
                 </button>
+                <button type="button" data-table="colspan_merge" class="dropdown-item">
+                    <img src="./img/right-long-solid-green.svg" class="dropdown_colspanicon" alt="向右合併">
+                    向右合併
+                </button>
+                <button type="button" data-table="rowspan_merge" class="dropdown-item">
+                    <img src="./img/down-long-solid-green.svg" class="dropdown_righticon" alt="向下合併">
+                    向下合併
+                </button>
                 <button type="button" data-table="del_column" class="dropdown-item">
                     <img src="./img/xmark-solid.svg" class="dropdown_delicon" alt="移除此列">
                     移除此列
@@ -422,6 +430,11 @@ function DataTableOtherButton(id,tableid)
                             }
                         });
                     }
+                    break;
+                //向右合併
+                case "colspan_merge":
+                    let position_array = TDposition(Table,target);
+                    ColspanMerge(Table,position_array);
                     break;
             }
         });
@@ -1117,4 +1130,119 @@ function TableTHeadData(Table)
         console.error('13.抓取表頭資料，請檢查 TableTHeadData()');
         return false;
     }
+}
+
+//14.向右合併
+function ColspanMerge(Table,position_array){
+    //(1.)找出目前位置
+    let tr_position = position_array.trposition;
+    let td_position = position_array.tdposition;
+    let tr_index = position_array.tr_index;
+    let td_index = position_array.td_index;
+
+    if(tr_position.querySelectorAll('td')[td_index + 1])
+    {
+        //本身如果是合併格，就直接添加 colSpan = 3 並且 colspan_index - 1
+        let All_colspan = tr_position.querySelectorAll('td')[td_index].getAttribute('colspan');
+        let All_colspan_next = tr_position.querySelectorAll('td')[td_index + 1].getAttribute('colspan');
+        let All_rowspan = tr_position.querySelectorAll('td')[td_index].getAttribute('rowspan');
+
+        if(All_colspan > 1 && (!All_rowspan || All_rowspan == 1))
+        {
+            let colspan_length = Number(tr_position.querySelectorAll('td')[td_index].getAttribute('colspan')) + 1;
+            let colspan_index = td_index - 1 > 1 ? td_index - 1 : 1;
+            tr_position.querySelectorAll('td')[td_index].colSpan = colspan_length;
+            tr_position.querySelectorAll('td')[td_index].setAttribute('colspan_index', colspan_index);
+            //下一個列表要刪除
+            tr_position.querySelectorAll('td')[td_index+1].remove();
+        }
+
+        if( All_colspan_next > 1 && (!All_rowspan || All_rowspan == 1))
+        {
+            let colspan_length = Number(tr_position.querySelectorAll('td')[td_index + 1].getAttribute('colspan')) + 1;
+            let colspan_index = Number(tr_position.querySelectorAll('td')[td_index + 1].getAttribute('colspan_index')) - 1 > 1 ? Number(tr_position.querySelectorAll('td')[td_index + 1].getAttribute('colspan_index')) - 1 : 1;
+
+            tr_position.querySelectorAll('td')[td_index].colSpan = colspan_length;
+            tr_position.querySelectorAll('td')[td_index].setAttribute('colspan_index', colspan_index);
+            //下一個列表要刪除
+            tr_position.querySelectorAll('td')[td_index+1].removeAttribute('colspan_index');
+            tr_position.querySelectorAll('td')[td_index+1].removeAttribute('colspan');
+            tr_position.querySelectorAll('td')[td_index+1].remove();
+
+        }
+
+        if(All_rowspan > 1 && ( !All_colspan || All_colspan == 1 )){
+
+            tr_position.querySelectorAll('td')[td_index].colSpan = 2;
+            tr_position.querySelectorAll('td')[td_index].setAttribute('colspan_index', td_index + 1);
+            //下一個列表要刪除
+            tr_position.querySelectorAll('td')[td_index+1].remove();
+            //下一行的同個位置也要移除
+            let rowspan_length = Number(tr_position.querySelectorAll('td')[td_index].getAttribute('rowspan'));
+            let rowspan_index = Number(tr_position.querySelectorAll('td')[td_index].getAttribute('rowspan_index'));
+            let tbody_all = Table.querySelector('tbody');
+            let tbody_tr_all = tbody_all.querySelectorAll('tr');
+            for(let i=1; i<rowspan_length; i++)
+            {
+                tbody_tr_all[tr_index + i].querySelectorAll('td')[td_index].remove();
+            }
+        }
+
+        //如果同時出現 colspan && rowspan
+        if( All_colspan > 1 && All_rowspan > 1)
+        {
+            console.log('出現');
+            //取得頁面上的資訊
+            let rowspan_length = tr_position.querySelectorAll('td')[td_index].getAttribute('rowspan');
+            let rowspan_index = tr_position.querySelectorAll('td')[td_index].getAttribute('rowspan_index');
+            let colspan = tr_position.querySelectorAll('td')[td_index].getAttribute('colspan');
+            let colspan_index = tr_position.querySelectorAll('td')[td_index].getAttribute('colspan_index');
+
+            tr_position.querySelectorAll('td')[td_index].colSpan = Number(colspan) + 1;
+            //下一個列表要刪除
+            tr_position.querySelectorAll('td')[td_index+1].remove();
+            let tbody_all = Table.querySelector('tbody');
+            let tbody_tr_all = tbody_all.querySelectorAll('tr');
+            for(let i=1; i<rowspan_length; i++)
+            {
+                console.log(tbody_tr_all[tr_index + i].querySelectorAll('td')[td_index]);
+                tbody_tr_all[tr_index + i].querySelectorAll('td')[td_index].remove();
+            }
+
+        }
+
+        if((!All_colspan || All_colspan == 1) && (!All_colspan_next || All_colspan_next == 1) && (!All_rowspan || All_rowspan == 1) ){
+            tr_position.querySelectorAll('td')[td_index].colSpan = 2;
+            tr_position.querySelectorAll('td')[td_index].setAttribute('colspan_index', td_index + 1);
+            //下一個列表要刪除
+            tr_position.querySelectorAll('td')[td_index+1].remove();
+        }
+
+    }
+
+
+}
+
+//15.抓出目前表格td所在位置
+function TDposition(Table,target)
+{
+    let array = [];
+    //(1.)取得目前所在td位置
+    let tdposition = target.parentElement.parentElement.parentElement.parentElement;
+    //(2.)取得目前所在tr
+    let trposition = tdposition.parentElement;
+    //(3.) tr 是第幾個
+    let tbody = Table.querySelector('tbody');
+    let tbody_tr = tbody.querySelectorAll('tr');
+    const tr_index = Array.prototype.indexOf.call(tbody_tr, trposition);
+    //(4.) td 是第幾個
+    let tbody_td = trposition.querySelectorAll('td');
+    const td_index = Array.prototype.indexOf.call(tbody_td, tdposition);
+
+    array['tdposition'] = tdposition;
+    array['trposition'] = trposition;
+    array['tr_index'] = tr_index;
+    array['td_index'] = td_index;
+
+    return array;
 }

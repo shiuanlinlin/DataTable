@@ -38,6 +38,11 @@
   opacity: 0.8;
   margin-right: 0.5rem;
 }
+.DataTableStyle .backend_menu button img.dropdown_colspanicon {
+  width: 18px;
+  opacity: 0.8;
+  margin-right: 0.5rem;
+}
 .DataTableStyle .backend_menu button img.dropdown_delicon {
   width: 12px;
   opacity: 0.8;
