@@ -82,11 +82,31 @@ let class_array = [];
 
 //頁籤
 //1.生成表格
-//TableDataShow(id,json,status);
+//TableDataShow(id,json,status)
 //2.按鈕功能作用
-//DataTableOtherButton(id);
+//DataTableOtherButton(id,tableid)
 //3.生成表頭
-//TableAddFieldTheader(Table,target,thparents,thparent,liIndex);
+//TableAddFieldTheader(thparents,liIndex)
+//4.生成內容(產生tbody)
+//TableAddFieldRowTbody(Table,liIndex, status)
+//5.生成表格同步處理
+//AddTableShow(Table,thparents,liIndex)
+//6.移除欄位
+//DelTableShow(Table,thparents,liIndex)
+//7.移除表頭
+//TableDelFieldTheader(thparents,liIndex)
+//8.新增列表
+//AddRowTableShow(Table,tbody_tr,tdposition,tr_index,td_index)
+//9.新增列表 - 處理表頭(新增與移除共用，因為表頭不會被影響)
+//TableAddRowTheader(Table)
+//10.移除列
+//DelRowTableShow(Table,tbody_tr,tr_index)
+//11.取得tbody資料
+//TableTbodyData(Table)
+//12.輸出json
+//DataTableJsonShow(Table)
+//13.抓取表頭資料
+//TableTHeadData(Table)
 
 
 $(document).ready(function(){
@@ -460,8 +480,6 @@ async function TableAddFieldRowTbody(Table,liIndex, status)
         let add_td = [];
         let tbody_array = [];
 
-        console.log("status : " + status);
-
         //新增列表使用
         if(status == "row_add")
         {
@@ -593,8 +611,6 @@ async function TableAddFieldRowTbody(Table,liIndex, status)
             tbody_array[i] = obj;
         }
         newjson['tbody'] = tbody_array;
-        console.log("tbody_array");
-        console.log(tbody_array);
         return true
     }catch(e)
     {
@@ -666,8 +682,6 @@ async function DelTableShow(Table,thparents,liIndex)
             resolve('del_header_ok');
         }
     });
-
-    console.log('移除');
 
     let promise2 = await new Promise((resolve,reject)=>{
         //移除內容
@@ -1071,12 +1085,10 @@ function TableTbodyData(Table)
 //12.輸出json
 function DataTableJsonShow(Table)
 {
-    let Thead = TableTHeadData(Table);
-    let Tbody_array = TableAddFieldRowTbody(Table,0,'');
-
-    console.log(Thead);
-    console.log(Tbody_array);
+    TableTHeadData(Table);
+    TableAddFieldRowTbody(Table,0,'');
     console.log(newjson);
+    return newjson
 }
 
 //13.抓取表頭資料
@@ -1100,8 +1112,6 @@ function TableTHeadData(Table)
 
         newjson['theader'] = theader_array;
         newjson['theader_name'] = theadername_array;
-        console.log(newjson.theader);
-        console.log(newjson.theader_name);
         return true;
     } catch (e) {
         console.error('13.抓取表頭資料，請檢查 TableTHeadData()');
