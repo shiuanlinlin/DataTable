@@ -16,10 +16,7 @@
             "t1": "測試",
             "t2": "2",
             "t3": "3",
-            "t4": "4",
-            "colspan": "2",
-            "colspan_index": "2",
-            "class": "text-left"
+            "t4": "4"
         },
         {
             "t1": "5",
@@ -29,24 +26,37 @@
         },
         {
             "t1": "9",
-            "t2": "10",
-            "t3": "11",
-            "t4": "12",
+            "t2": "9",
+            "t3": "12",
+            "t4": "--colspan--",
             "rowspan": "3",
             "rowspan_index": "1",
+            "colspan": "3",
+            "colspan_index": "1",
             "class": "text-left"
         },
         {
-            "t1": "13",
-            "t2": "14",
-            "t3": "15",
-            "t4": "16"
+            "t1": "9",
+            "t2": "9",
+            "t3": "12",
+            "t4": "--colspan--",
+            "rowspan": "3",
+            "rowspan_index": "1",
+            "colspan": "3",
+            "colspan_index": "1",
+            "class": "text-left"
         },
         {
-            "t1": "17",
-            "t2": "18",
-            "t3": "19",
-            "t4": "20"
+            "t1": "16",
+            "t2": "16",
+            "t3": "--rowspan--",
+            "t4": "--rowspan--"
+        },
+        {
+            "t1": "20",
+            "t2": "20",
+            "t3": "--rowspan--",
+            "t4": "--rowspan--"
         }
     ]
 
