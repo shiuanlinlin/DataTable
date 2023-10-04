@@ -463,7 +463,7 @@ async function TableAddFieldTbody(Table,liIndex, status)
         console.log(TableTbodyData_array);
 
         //新增欄位使用
-        if(status = "add")
+        if(status == "add")
         {
             //取得每欄位的 t2
             for(let i=0; i<TableTbodyData_array.length; i++)
@@ -488,6 +488,7 @@ async function TableAddFieldTbody(Table,liIndex, status)
 
         console.log('新增後取得的結果');
         console.log(TableTbodyData_array);
+        console.log(status);
 
         //移除欄位使用
         if(status == 'del')
@@ -519,12 +520,28 @@ async function TableAddFieldTbody(Table,liIndex, status)
                     if(TableTbodyData_array[i][j].rowspan)
                     {
                         let rowspan_index = TableTbodyData_array[i][j].rowspan_index;
+                        let rowspan =  TableTbodyData_array[i][j].rowspan;
                         //如果是添加欄位，合併欄位+1
                         if(((rowspan_index - 1) > liIndex) && status == 'add')
                         {
                             rowspan_index = Number(TableTbodyData_array[i][j].rowspan_index) + 1;
                         }
-                        obj["rowspan"] = TableTbodyData_array[i][j].rowspan;
+
+                        //如果是移除欄位，如果是同一個欄位，就不要寫入了
+                        if(((rowspan_index - 1) == liIndex) && status == 'del')
+                        {
+                            rowspan_index = "";
+                            rowspan = "";
+                        }
+
+                        //如果是移除欄位，如果小於合併所在位置，就減1
+                        if(((rowspan_index - 1) > liIndex) && status == 'del')
+                        {
+                            rowspan_index = Number(TableTbodyData_array[i][j].rowspan_index) - 1;
+                        }
+
+
+                        obj["rowspan"] = rowspan;
                         obj["rowspan_index"] = rowspan_index;
                     }
                     //判斷class 寫入
@@ -615,6 +632,8 @@ async function DelTableShow(Table,thparents,liIndex)
             resolve('del_header_ok');
         }
     });
+
+    console.log('移除');
 
     let promise2 = await new Promise((resolve,reject)=>{
         //移除內容
