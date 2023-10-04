@@ -286,7 +286,7 @@ function DataTableOtherButton(id,tableid)
             {
                 //產生json
                 case "json":
-                    DataTableJsonShow();
+                    DataTableJsonShow(Table);
                     break;
                 //右邊新增一欄位
                 case "right_add":
@@ -451,7 +451,7 @@ function TableAddFieldTheader(thparents,liIndex)
     }
 }
 
-//4.生成內容
+//4.生成內容(產生tbody)
 async function TableAddFieldRowTbody(Table,liIndex, status)
 {
     try {
@@ -604,7 +604,7 @@ async function TableAddFieldRowTbody(Table,liIndex, status)
 }
 
 
-//生成表格同步處理
+//5.生成表格同步處理
 async function AddTableShow(Table,thparents,liIndex)
 {
     let promise1 = await new Promise((resolve,reject)=>{
@@ -655,7 +655,7 @@ async function AddTableShow(Table,thparents,liIndex)
     });
 }
 
-//移除欄位
+//6.移除欄位
 async function DelTableShow(Table,thparents,liIndex)
 {
     let promise1 = await new Promise((resolve,reject)=>{
@@ -709,7 +709,7 @@ async function DelTableShow(Table,thparents,liIndex)
     });
 }
 
-//移除表頭
+//7.移除表頭
 function TableDelFieldTheader(thparents,liIndex)
 {
     try{
@@ -750,7 +750,7 @@ function TableDelFieldTheader(thparents,liIndex)
     }
 }
 
-//新增列表
+//8.新增列表
 async function AddRowTableShow(Table,tbody_tr,tdposition,tr_index,td_index)
 {
     let promise1 = await new Promise((resolve,reject)=>{
@@ -765,8 +765,6 @@ async function AddRowTableShow(Table,tbody_tr,tdposition,tr_index,td_index)
     let promise2 = await new Promise((resolve,reject)=>{
         //新增列表 - 處理內容
         let TableBody = TableAddFieldRowTbody(Table,tr_index,'row_add');
-        console.log("TableBody?????哪來的0");
-        console.log(TableBody);
         if(TableBody)
         {
             resolve('Finish');
@@ -804,7 +802,7 @@ async function AddRowTableShow(Table,tbody_tr,tdposition,tr_index,td_index)
 }
 
 
-//新增列表 - 處理表頭(新增與移除共用，因為表頭不會被影響)
+//9.新增列表 - 處理表頭(新增與移除共用，因為表頭不會被影響)
 function TableAddRowTheader(Table)
 {
     try{
@@ -836,174 +834,7 @@ function TableAddRowTheader(Table)
     }
 }
 
-//新增列表 - 處理內容
-// function TableAddRowTbody(Table,tbody_tr,tr_index,status)
-// {
-//     let TableTbodyData_array = TableTbodyData(Table);
-//     let add_array = [];
-//     let add_td = [];
-//     let tbody_array = [];
-
-//     //新增欄位使用
-//     if(status == 'row_add')
-//     {
-//         //(2.)處理新增加的資料
-//         let Add_array = TableTbodyData_array[tr_index];
-//         //(3.)將他插入
-//         TableTbodyData_array.splice(tr_index,0,Add_array);
-
-//     }
-
-//     //移除欄位使用
-//     if(status == "row_del")
-//     {
-//         //將資料移除
-//         TableTbodyData_array.splice(tr_index,1);
-//     }
-
-//     //取得正常的 td 長度
-//     let length = newjson.theader.length;
-
-//     //整理資料
-//     for(let i=0; i<TableTbodyData_array.length; i++)
-//     {
-//         const obj = {};
-//         for(let j=0; j<TableTbodyData_array[i].length; j++)
-//         {
-//             if( (j+1) <= length )
-//             {
-//                 const key = "t" + (j+1);
-//                 obj[key] = TableTbodyData_array[i][j];
-//             }
-
-//             if( (j+1) > length ){
-//                 //多餘的資料檢查，如果有合併欄位資訊就寫進去
-//                 if(TableTbodyData_array[i][j].rowspan)
-//                 {
-//                     let rowspan_index = TableTbodyData_array[i][j].rowspan_index;
-//                     let rowspan =  TableTbodyData_array[i][j].rowspan;
-//                     //如果是添加欄位，合併欄位+1
-//                     if(((rowspan_index - 1) > liIndex) && status == 'add')
-//                     {
-//                         rowspan_index = Number(TableTbodyData_array[i][j].rowspan_index) + 1;
-//                     }
-
-//                     //如果是移除欄位，如果是同一個欄位，就不要寫入了
-//                     if(((rowspan_index - 1) == liIndex) && status == 'del')
-//                     {
-//                         rowspan_index = "";
-//                         rowspan = "";
-//                     }
-
-//                     //如果是移除欄位，如果小於合併所在位置，就減1
-//                     if(((rowspan_index - 1) > liIndex) && status == 'del')
-//                     {
-//                         rowspan_index = Number(TableTbodyData_array[i][j].rowspan_index) - 1;
-//                     }
-
-
-//                     obj["rowspan"] = rowspan;
-//                     obj["rowspan_index"] = rowspan_index;
-//                 }
-//                 //判斷class 寫入
-//                 if(TableTbodyData_array[i][j].class)
-//                 {
-//                     obj["class"] = TableTbodyData_array[i][j].class;
-//                 }
-
-//                 //判斷列表合併
-//                 if(TableTbodyData_array[i][j].colspan)
-//                 {
-//                     let colspan = TableTbodyData_array[i][j].colspan;
-//                     let colspan_index = TableTbodyData_array[i][j].colspan_index;
-//                     if((colspan_index - 1) > liIndex && status == 'add')
-//                     {
-//                         colspan_index = Number(TableTbodyData_array[i][j].colspan_index) +1;
-//                     }
-//                     //如果是移除欄位，如果是同一個欄位，就不要寫入了
-//                     if(((colspan_index - 1) == liIndex) && status == 'del')
-//                     {
-//                         colspan = "";
-//                         colspan_index = "";
-//                     }
-
-//                     //如果是移除欄位，如果小於合併所在位置，就減1
-//                     if(((colspan_index - 1) > liIndex) && status == 'del')
-//                     {
-//                         colspan_index = Number(TableTbodyData_array[i][j].colspan_index) - 1;
-//                     }
-
-//                     obj["colspan"] = colspan;
-//                     obj["colspan_index"] = colspan_index;
-//                 }
-//             }
-//         }
-//         tbody_array[i] = obj;
-//     }
-//     newjson['tbody'] = tbody_array;
-//     console.log(newjson.tbody);
-//     return true
-
-//     // try{
-//     //     console.log(status);
-//     //     //(1.) 先將所有資料存入陣列
-//     //     let tbody_tr_array = [];
-//     //     let td_array = [];
-//     //     let tbody_array = [];
-
-//     //     //取得td長度，怕有合併格的問題，所以取原始資料
-//     //     const td_length = newjson.theader.length;
-//     //     //將頁面資料整理起來
-//     //     for(let i=0; i<tbody_tr.length; i++)
-//     //     {
-//     //         for(let j=0; j<td_length; j++)
-//     //         {
-//     //             td_array[j] = tbody_tr[i].querySelectorAll('td')[j].querySelector('input').value;
-//     //         }
-
-//     //         tbody_tr_array[i] = td_array;
-//     //         td_array = [];
-//     //     }
-
-//     //     //如果是要新增加一欄
-//     //     if(status == 'row_add')
-//     //     {
-//     //         //(2.)處理新增加的資料
-//     //         let Add_array = tbody_tr_array[tr_index];
-//     //         //(3.)將他插入
-//     //         tbody_tr_array.splice(tr_index,0,Add_array);
-//     //     }
-
-//     //      //如果是要移除一欄
-//     //      if(status == 'row_del')
-//     //      {
-//     //         tbody_tr_array.splice(tr_index,1);
-//     //      }
-
-//     //     //(4.)將資料整理成正確json
-//     //     for(let i=0; i<tbody_tr_array.length;i++)
-//     //     {
-//     //         const obj = {};
-//     //         for(let j=0; j<tbody_tr_array[i].length;j++)
-//     //         {
-//     //             const key = "t"+(j+1);
-//     //             obj[key] = tbody_tr_array[i][j];
-//     //         }
-//     //         tbody_array[i] = obj;
-//     //     }
-
-//     //     newjson['tbody'] = tbody_array;
-//     //     return true
-//     // }
-//     // catch(e)
-//     // {
-//     //     console.error("新增一列內容 TableAddRowTbody() 發生錯誤，請檢查");
-//     //     return false
-//     // }
-// }
-
-
-//移除列
+//10.移除列
 async function DelRowTableShow(Table,tbody_tr,tr_index)
 {
     let promise1 = await new Promise((resolve,reject)=>{
@@ -1054,7 +885,7 @@ async function DelRowTableShow(Table,tbody_tr,tr_index)
     });
 }
 
-//取得tbody資料
+//11.取得tbody資料
 function TableTbodyData(Table)
 {
     try{
@@ -1237,15 +1068,43 @@ function TableTbodyData(Table)
 }
 
 
-//輸出json
-function DataTableJsonShow()
+//12.輸出json
+function DataTableJsonShow(Table)
 {
-    if(newjson.theader.length == 0)
-    {
-        console.log(jsonDataTable);
-    }
-    else
-    {
-        console.log(newjson);
+    let Thead = TableTHeadData(Table);
+    let Tbody_array = TableAddFieldRowTbody(Table,0,'');
+
+    console.log(Thead);
+    console.log(Tbody_array);
+    console.log(newjson);
+}
+
+//13.抓取表頭資料
+function TableTHeadData(Table)
+{
+    try {
+        //取得目前是幾欄位
+        let Thead = Table.querySelector('thead');
+        let Thead_tr = Table.querySelectorAll('th');
+        let field = DataTableShow.columns().count();
+        let theader_array = [];
+        let theadername_array = [];
+
+        for(let i=0; i<field; i++)
+        {
+            //欄位數量回寫
+            theader_array[i] = {"data": "t" + Number(i+1)};
+            //th內容獲得
+            theadername_array[i] = {"name": Thead_tr[i].querySelector('input').value};
+        }
+
+        newjson['theader'] = theader_array;
+        newjson['theader_name'] = theadername_array;
+        console.log(newjson.theader);
+        console.log(newjson.theader_name);
+        return true;
+    } catch (e) {
+        console.error('13.抓取表頭資料，請檢查 TableTHeadData()');
+        return false;
     }
 }
