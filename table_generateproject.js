@@ -75,7 +75,10 @@ let demotest_start = false;
 
 //判斷到有合併格
 let rowspan_array = [];
+let colspan_array = [];
 
+//判斷是否有class
+let class_array = [];
 
 //頁籤
 //1.生成表格
@@ -455,19 +458,9 @@ async function TableAddFieldTbody(Table,liIndex, status)
         let add_array = [];
         let add_td = [];
         let tbody_array = [];
-        // //看是否有合併欄位的資料，如果有，需要先加進去
-        // if(rowspan_array.length > 0)
-        // {
-        //     rowspan_array.forEach(item=>{
-        //         let tr_index = item.tr_index;
-        //         const obj = {};
-        //         obj['rowspan'] = item.rowspan;
-        //         obj['rowspan_index'] = item.rowspan_index;
-        //         TableTbodyData_array[tr_index].push(obj);
-        //     });
-        //     //處理完成清空
-        //     rowspan_array = [];
-        // }
+
+        console.log('新增前取得的結果');
+        console.log(TableTbodyData_array);
 
         //新增欄位使用
         if(status = "add")
@@ -491,10 +484,10 @@ async function TableAddFieldTbody(Table,liIndex, status)
             {
                 TableTbodyData_array[i].splice(liIndex, 0, add_array[i][liIndex]);
             }
-
-            console.log("將資料加進去");
-            console.log(TableTbodyData_array);
         }
+
+        console.log('新增後取得的結果');
+        console.log(TableTbodyData_array);
 
         //移除欄位使用
         if(status == 'del')
@@ -504,9 +497,6 @@ async function TableAddFieldTbody(Table,liIndex, status)
             {
                 TableTbodyData_array[i].splice(liIndex, 1,);
             }
-
-            console.log("將資料移除");
-            console.log(TableTbodyData_array);
         }
 
         //取得正常的 td 長度
@@ -528,17 +518,32 @@ async function TableAddFieldTbody(Table,liIndex, status)
                     //多餘的資料檢查，如果有合併欄位資訊就寫進去
                     if(TableTbodyData_array[i][j].rowspan)
                     {
+                        let rowspan_index = TableTbodyData_array[i][j].rowspan_index;
+                        //如果是添加欄位，合併欄位+1
+                        if(((rowspan_index - 1) > liIndex) && status == 'add')
+                        {
+                            rowspan_index = Number(TableTbodyData_array[i][j].rowspan_index) + 1;
+                        }
                         obj["rowspan"] = TableTbodyData_array[i][j].rowspan;
-                        obj["rowspan_index"] = TableTbodyData_array[i][j].rowspan_index;
+                        obj["rowspan_index"] = rowspan_index;
+                    }
+                    //判斷class 寫入
+                    if(TableTbodyData_array[i][j].class)
+                    {
+                        obj["class"] = TableTbodyData_array[i][j].class;
+                    }
+
+                    //判斷列表合併
+                    if(TableTbodyData_array[i][j].colspan)
+                    {
+                        obj["colspan"] = TableTbodyData_array[i][j].colspan;
+                        obj["colspan_index"] = TableTbodyData_array[i][j].colspan_index;
                     }
                 }
             }
             tbody_array[i] = obj;
         }
-
-        console.log("最終資料");
         newjson['tbody'] = tbody_array;
-        console.log(newjson);
         return true
     }catch(e)
     {
@@ -562,7 +567,7 @@ async function AddTableShow(Table,thparents,liIndex)
 
     let promise2 = await new Promise((resolve,reject)=>{
         //生成內容
-        let TableBody = TableAddFieldTbody(Table,liIndex);
+        let TableBody = TableAddFieldTbody(Table,liIndex,'add');
         if(TableBody)
         {
             resolve('Finish');
@@ -594,6 +599,7 @@ async function AddTableShow(Table,thparents,liIndex)
     let promise4 = await new Promise((resolve,reject)=>{
         var currentData = DataTableShow.rows().data().toArray();
         var jsonData = JSON.stringify(currentData);
+        console.log(jsonData);
         console.log('測試模式開啟！請注意');
     });
 }
@@ -645,6 +651,7 @@ async function DelTableShow(Table,thparents,liIndex)
     let promise4 = await new Promise((resolve,reject)=>{
         var currentData = DataTableShow.rows().data().toArray();
         var jsonData = JSON.stringify(currentData);
+        console.log(jsonData);
         console.log('測試模式開啟！請注意');
     });
 }
@@ -736,6 +743,7 @@ async function AddRowTableShow(Table,tbody_tr,tdposition,tr_index,td_index)
     let promise4 = await new Promise((resolve,reject)=>{
         var currentData = DataTableShow.rows().data().toArray();
         var jsonData = JSON.stringify(currentData);
+        console.log(jsonData);
         console.log('測試模式開啟！請注意');
     });
 }
@@ -880,6 +888,7 @@ async function DelRowTableShow(Table,tbody_tr,tr_index)
     let promise4 = await new Promise((resolve,reject)=>{
         var currentData = DataTableShow.rows().data().toArray();
         var jsonData = JSON.stringify(currentData);
+        console.log(jsonData);
         console.log('測試模式開啟！請注意');
     });
 }
@@ -887,106 +896,343 @@ async function DelRowTableShow(Table,tbody_tr,tr_index)
 //取得tbody資料
 function TableTbodyData(Table)
 {
-    try{
-        //1.取得表格 tr
-        let tbody = Table.querySelector('tbody');
-        let tbody_tr = tbody.querySelectorAll('tr');
+            //1.取得表格 tr
+            let tbody = Table.querySelector('tbody');
+            let tbody_tr = tbody.querySelectorAll('tr');
 
-        //2.先存取未處理的資料
-        let tbody_tr_array = [];
-        let tbody_td_array = [];
+            //2.先存取未處理的資料
+            let tbody_tr_array = [];
+            let tbody_td_array = [];
 
-        //取得目前是幾欄位
-        let field = DataTableShow.columns().count();
-        //取得目前是幾列
-        let row = DataTableShow.rows().count();
+            //取得目前是幾欄位
+            let field = DataTableShow.columns().count();
+            //取得目前是幾列
+            let row = DataTableShow.rows().count();
 
-        //判斷是否要開始讀前一個資料
-        let number = 0;
+            //判斷是否要開始讀前一個資料
+            let rowspan_number = 0;
+            let colspan_number = 0;
 
-        //合併資料
-        let rowspan_data = [];
+            //合併資料
+            let rowspan_data = [];
+            let colspan_data = [];
+            //class資料
+            let class_data = [];
 
-        //先取得頁面舊資料
-        for(let i=0; i<row; i++)
-        {
-            //有合併欄位，下一項要處理
-            if(number > 0)
+            //先取得頁面舊資料
+            for(let i=0; i<row; i++)
             {
-                for(let j=0; j<field; j++)
+                //有合併欄位，下一項要處理
+                if(rowspan_number > 0)
                 {
-                    //有合併的資料需要讀前一項
-                    let index = (j-1) > -1 ? (j-1) : 0;
-                    const td_tag = tbody_tr[i].querySelectorAll('td')[index];
-                    let td_input = td_tag.querySelector('input').value;
-                    tbody_td_array.push(td_input);
-                }
-                //處理完這一行，取消
-                number = number - 1;
-            }
-
-            //沒有合併欄位
-            if(number == 0)
-            {
-                for(let j=0; j<field; j++)
-                {
-                    const td_tag = tbody_tr[i].querySelectorAll('td')[j];
-                    if(td_tag)
+                    for(let j=0; j<field; j++)
                     {
-                        let td_input = td_tag.querySelector('input').value;
+                        let index = (j-1) > -1 ? (j-1) : 0;
+                        const td_tag = tbody_tr[i].querySelectorAll('td')[index];
+                        let td_input = "--rowspan--";
+                        if(td_tag)
+                        {
+                            td_input = td_tag.querySelector('input').value;
+                        }
                         tbody_td_array.push(td_input);
 
-                        //判斷是否有合併欄位
-                        if(td_tag.getAttribute('rowspan') > 1)
-                        {
-                            //有的話紀錄進去
-                            rowspan_data['tr_index'] = i;
-                            rowspan_data['td_index'] = j;
-                            rowspan_data['rowspan'] = td_tag.getAttribute('rowspan');
-                            rowspan_data['rowspan_index'] = td_tag.getAttribute('rowspan_index');
-                            rowspan_array.push(rowspan_data);
-                            number = Number(td_tag.getAttribute('rowspan')) - 1;
-                            //使用完，清空
-                            rowspan_data = [];
-                        }
                     }
-                    else
-                    {
-                        tbody_td_array.push('這不應該發生');
-                    }
+                    //處理完這一行，取消
+                    rowspan_number = rowspan_number - 1;
                 }
 
+                //沒有合併欄位
+                if(rowspan_number == 0)
+                {
+                    for(let j=0; j<field; j++)
+                    {
+                        const td_tag = tbody_tr[i].querySelectorAll('td')[j];
+
+                        if(colspan_number > 0)
+                        {
+                            //橫向合併會少一欄位
+                            let index = (j-1) > -1 ? (j-1) : 0;
+                            const td_tag = tbody_tr[i].querySelectorAll('td')[index];
+                            let td_input = "--colspan--";
+                            if(td_tag)
+                            {
+                                td_input = td_tag.querySelector('input').value;
+                            }
+                            else
+                            tbody_td_array.push(td_input);
+                            colspan_number = colspan_number - 1;
+                        }
+
+                        if(colspan_number == 0)
+                        {
+                            if(td_tag)
+                            {
+                                let td_input = td_tag.querySelector('input').value;
+                                tbody_td_array.push(td_input);
+
+                                //判斷是否有合併欄位
+                                if(td_tag.getAttribute('rowspan') > 1)
+                                {
+                                    //有的話紀錄進去
+                                    rowspan_data['tr_index'] = i;
+                                    rowspan_data['td_index'] = j;
+                                    rowspan_data['rowspan'] = td_tag.getAttribute('rowspan');
+                                    rowspan_data['rowspan_index'] = td_tag.getAttribute('rowspan_index');
+                                    rowspan_array.push(rowspan_data);
+                                    rowspan_number = Number(td_tag.getAttribute('rowspan')) - 1;
+                                    //使用完，清空
+                                    rowspan_data = [];
+                                }
+
+                                //判斷是否有列表合併
+                                if(td_tag.getAttribute('colspan') > 1)
+                                {
+                                    //有的話紀錄進去
+                                    colspan_data['tr_index'] = i;
+                                    colspan_data['td_index'] = j;
+                                    colspan_data['colspan'] = td_tag.getAttribute('colspan');
+                                    colspan_data['colspan_index'] = td_tag.getAttribute('colspan_index');
+                                    colspan_array.push(colspan_data);
+                                    colspan_number = Number(td_tag.getAttribute('colspan')) - 1;
+                                    //使用完，清空
+                                    colspan_data = [];
+                                }
+
+                                //判斷是否有class
+                                if(td_tag.className)
+                                {
+                                    class_data['tr_index'] = i;
+                                    class_data['td_index'] = j;
+                                    class_data['class_name'] = td_tag.className;
+                                    class_array.push(class_data);
+                                    //使用完，清空
+                                    class_data = [];
+                                }
+
+                            }
+                            else
+                            {
+                                tbody_td_array.push('這不應該發生');
+                            }
+                        }
+                    }
+
+                }
+
+                tbody_tr_array[i] = tbody_td_array;
+                //清空
+                tbody_td_array = [];
             }
 
-            tbody_tr_array[i] = tbody_td_array;
-            //清空
-            tbody_td_array = [];
-        }
+            //看是否有合併欄位的資料，如果有，需要先加進去
+            if(rowspan_array.length > 0)
+            {
+                rowspan_array.forEach(item=>{
+                    let tr_index = item.tr_index;
+                    const obj = {};
+                    obj['rowspan'] = item.rowspan;
+                    obj['rowspan_index'] = item.rowspan_index;
+                    tbody_tr_array[tr_index].push(obj);
+                });
+                //處理完成清空
+                rowspan_array = [];
+            }
 
-        //看是否有合併欄位的資料，如果有，需要先加進去
-        if(rowspan_array.length > 0)
-        {
-            rowspan_array.forEach(item=>{
-                let tr_index = item.tr_index;
-                const obj = {};
-                obj['rowspan'] = item.rowspan;
-                obj['rowspan_index'] = item.rowspan_index;
-                tbody_tr_array[tr_index].push(obj);
-            });
-            //處理完成清空
-            rowspan_array = [];
-        }
+            //看是否有合併欄位的資料，如果有，需要先加進去
+            if(colspan_array.length > 0)
+            {
+                colspan_array.forEach(item=>{
+                    let tr_index = item.tr_index;
+                    const obj = {};
+                    obj['colspan'] = item.colspan;
+                    obj['colspan_index'] = item.colspan_index;
+                    tbody_tr_array[tr_index].push(obj);
+                });
+                //處理完成清空
+                colspan_array = [];
+            }
 
-        console.log("//看是否有合併欄位的資料，如果有，需要先加進去");
-        console.log(tbody_tr_array);
+            //看是否有class，如果有，需要先加進去
+            if(class_array.length > 0)
+            {
+                class_array.forEach(item=>{
+                    let tr_index = item.tr_index;
+                    const obj = {};
+                    obj['class'] = item.class_name;
+                    tbody_tr_array[tr_index].push(obj);
+                });
+                //處理完成清空
+                class_array = [];
+            }
 
-        return tbody_tr_array;
-    }
-    catch(e)
-    {
-        console.error("取得tbody資料失敗 TableTbodyData() 發生錯誤，請檢查");
-        return false
-    }
+            return tbody_tr_array;
+
+    // try{
+    //     //1.取得表格 tr
+    //     let tbody = Table.querySelector('tbody');
+    //     let tbody_tr = tbody.querySelectorAll('tr');
+
+    //     //2.先存取未處理的資料
+    //     let tbody_tr_array = [];
+    //     let tbody_td_array = [];
+
+    //     //取得目前是幾欄位
+    //     let field = DataTableShow.columns().count();
+    //     //取得目前是幾列
+    //     let row = DataTableShow.rows().count();
+
+    //     //判斷是否要開始讀前一個資料
+    //     let rowspan_number = 0;
+    //     let colspan_number = 0;
+
+    //     //合併資料
+    //     let rowspan_data = [];
+    //     let colspan_data = [];
+    //     //class資料
+    //     let class_data = [];
+
+    //     //先取得頁面舊資料
+    //     for(let i=0; i<row; i++)
+    //     {
+    //         //有合併欄位，下一項要處理
+    //         if(rowspan_number > 0)
+    //         {
+    //             for(let j=0; j<field; j++)
+    //             {
+    //                 //有合併的資料需要讀前一項
+    //                 let index = (j-1) > -1 ? (j-1) : 0;
+    //                 const td_tag = tbody_tr[i].querySelectorAll('td')[index];
+    //                 let td_input = td_tag.querySelector('input').value;
+    //                 tbody_td_array.push(td_input);
+    //             }
+    //             //處理完這一行，取消
+    //             rowspan_number = rowspan_number - 1;
+    //         }
+
+    //         //沒有合併欄位
+    //         if(rowspan_number == 0)
+    //         {
+    //             for(let j=0; j<field; j++)
+    //             {
+    //                 const td_tag = tbody_tr[i].querySelectorAll('td')[j];
+
+    //                 if(colspan_number > 0)
+    //                 {
+    //                     let index = (j-1) > -1 ? (j-1) : 0;
+    //                     const td_tag = tbody_tr[i].querySelectorAll('td')[index];
+    //                     let td_input = td_tag.querySelector('input').value;
+    //                     tbody_td_array.push(td_input);
+    //                     colspan_number = colspan_number - 1;
+    //                 }
+
+    //                 if(colspan_number == 0)
+    //                 {
+    //                     if(td_tag)
+    //                     {
+    //                         let td_input = td_tag.querySelector('input').value;
+    //                         tbody_td_array.push(td_input);
+
+    //                         //判斷是否有合併欄位
+    //                         if(td_tag.getAttribute('rowspan') > 1)
+    //                         {
+    //                             //有的話紀錄進去
+    //                             rowspan_data['tr_index'] = i;
+    //                             rowspan_data['td_index'] = j;
+    //                             rowspan_data['rowspan'] = td_tag.getAttribute('rowspan');
+    //                             rowspan_data['rowspan_index'] = td_tag.getAttribute('rowspan_index');
+    //                             rowspan_array.push(rowspan_data);
+    //                             rowspan_number = Number(td_tag.getAttribute('rowspan')) - 1;
+    //                             //使用完，清空
+    //                             rowspan_data = [];
+    //                         }
+
+    //                         //判斷是否有列表合併
+    //                         if(td_tag.getAttribute('colspan') > 1)
+    //                         {
+    //                             //有的話紀錄進去
+    //                             colspan_data['tr_index'] = i;
+    //                             colspan_data['td_index'] = j;
+    //                             colspan_data['colspan'] = td_tag.getAttribute('colspan');
+    //                             colspan_data['colspan_index'] = td_tag.getAttribute('colspan_index');
+    //                             colspan_array.push(colspan_data);
+    //                             colspan_number = Number(td_tag.getAttribute('colspan')) - 1;
+    //                             //使用完，清空
+    //                             colspan_data = [];
+    //                         }
+
+    //                         //判斷是否有class
+    //                         if(td_tag.className)
+    //                         {
+    //                             class_data['tr_index'] = i;
+    //                             class_data['td_index'] = j;
+    //                             class_data['class_name'] = td_tag.className;
+    //                             class_array.push(class_data);
+    //                             //使用完，清空
+    //                             class_data = [];
+    //                         }
+
+    //                     }
+    //                     else
+    //                     {
+    //                         tbody_td_array.push('這不應該發生');
+    //                     }
+    //                 }
+    //             }
+
+    //         }
+
+    //         tbody_tr_array[i] = tbody_td_array;
+    //         //清空
+    //         tbody_td_array = [];
+    //     }
+
+    //     //看是否有合併欄位的資料，如果有，需要先加進去
+    //     if(rowspan_array.length > 0)
+    //     {
+    //         rowspan_array.forEach(item=>{
+    //             let tr_index = item.tr_index;
+    //             const obj = {};
+    //             obj['rowspan'] = item.rowspan;
+    //             obj['rowspan_index'] = item.rowspan_index;
+    //             tbody_tr_array[tr_index].push(obj);
+    //         });
+    //         //處理完成清空
+    //         rowspan_array = [];
+    //     }
+
+    //     //看是否有合併欄位的資料，如果有，需要先加進去
+    //     if(colspan_array.length > 0)
+    //     {
+    //         colspan_array.forEach(item=>{
+    //             let tr_index = item.tr_index;
+    //             const obj = {};
+    //             obj['colspan'] = item.colspan;
+    //             obj['colspan_index'] = item.colspan_index;
+    //             tbody_tr_array[tr_index].push(obj);
+    //         });
+    //         //處理完成清空
+    //         colspan_array = [];
+    //     }
+
+    //     //看是否有class，如果有，需要先加進去
+    //     if(class_array.length > 0)
+    //     {
+    //         class_array.forEach(item=>{
+    //             let tr_index = item.tr_index;
+    //             const obj = {};
+    //             obj['class'] = item.class_name;
+    //             tbody_tr_array[tr_index].push(obj);
+    //         });
+    //         //處理完成清空
+    //         class_array = [];
+    //     }
+    //     return tbody_tr_array;
+    // }
+    // catch(e)
+    // {
+    //     console.error("取得tbody資料失敗 TableTbodyData() 發生錯誤，請檢查");
+    //     return false
+    // }
 
 }
 
