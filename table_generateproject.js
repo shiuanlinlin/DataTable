@@ -455,19 +455,19 @@ async function TableAddFieldTbody(Table,liIndex, status)
         let add_array = [];
         let add_td = [];
         let tbody_array = [];
-        //看是否有合併欄位的資料，如果有，需要先加進去
-        if(rowspan_array.length > 0)
-        {
-            rowspan_array.forEach(item=>{
-                let tr_index = item.tr_index;
-                const obj = {};
-                obj['rowspan'] = item.rowspan;
-                obj['rowspan_index'] = item.rowspan_index;
-                TableTbodyData_array[tr_index].push(obj);
-            });
-            //處理完成清空
-            rowspan_array = [];
-        }
+        // //看是否有合併欄位的資料，如果有，需要先加進去
+        // if(rowspan_array.length > 0)
+        // {
+        //     rowspan_array.forEach(item=>{
+        //         let tr_index = item.tr_index;
+        //         const obj = {};
+        //         obj['rowspan'] = item.rowspan;
+        //         obj['rowspan_index'] = item.rowspan_index;
+        //         TableTbodyData_array[tr_index].push(obj);
+        //     });
+        //     //處理完成清空
+        //     rowspan_array = [];
+        // }
 
         //新增欄位使用
         if(status = "add")
@@ -491,6 +491,9 @@ async function TableAddFieldTbody(Table,liIndex, status)
             {
                 TableTbodyData_array[i].splice(liIndex, 0, add_array[i][liIndex]);
             }
+
+            console.log("將資料加進去");
+            console.log(TableTbodyData_array);
         }
 
         //移除欄位使用
@@ -501,6 +504,9 @@ async function TableAddFieldTbody(Table,liIndex, status)
             {
                 TableTbodyData_array[i].splice(liIndex, 1,);
             }
+
+            console.log("將資料移除");
+            console.log(TableTbodyData_array);
         }
 
         //取得正常的 td 長度
@@ -956,6 +962,24 @@ function TableTbodyData(Table)
             //清空
             tbody_td_array = [];
         }
+
+        //看是否有合併欄位的資料，如果有，需要先加進去
+        if(rowspan_array.length > 0)
+        {
+            rowspan_array.forEach(item=>{
+                let tr_index = item.tr_index;
+                const obj = {};
+                obj['rowspan'] = item.rowspan;
+                obj['rowspan_index'] = item.rowspan_index;
+                tbody_tr_array[tr_index].push(obj);
+            });
+            //處理完成清空
+            rowspan_array = [];
+        }
+
+        console.log("//看是否有合併欄位的資料，如果有，需要先加進去");
+        console.log(tbody_tr_array);
+
         return tbody_tr_array;
     }
     catch(e)
