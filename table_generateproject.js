@@ -550,8 +550,27 @@ async function TableAddFieldTbody(Table,liIndex, status)
                     //判斷列表合併
                     if(TableTbodyData_array[i][j].colspan)
                     {
-                        obj["colspan"] = TableTbodyData_array[i][j].colspan;
-                        obj["colspan_index"] = TableTbodyData_array[i][j].colspan_index;
+                        let colspan = TableTbodyData_array[i][j].colspan;
+                        let colspan_index = TableTbodyData_array[i][j].colspan_index;
+                        if((colspan_index - 1) > liIndex && status == 'add')
+                        {
+                            colspan_index = Number(TableTbodyData_array[i][j].colspan_index) +1;
+                        }
+                        //如果是移除欄位，如果是同一個欄位，就不要寫入了
+                        if(((colspan_index - 1) == liIndex) && status == 'del')
+                        {
+                            colspan = "";
+                            colspan_index = "";
+                        }
+
+                        //如果是移除欄位，如果小於合併所在位置，就減1
+                        if(((colspan_index - 1) > liIndex) && status == 'del')
+                        {
+                            colspan_index = Number(TableTbodyData_array[i][j].colspan_index) - 1;
+                        }
+
+                        obj["colspan"] = colspan;
+                        obj["colspan_index"] = colspan_index;
                     }
                 }
             }
