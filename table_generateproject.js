@@ -452,13 +452,31 @@ function TableAddFieldTheader(thparents,liIndex)
 }
 
 //4.生成內容
-async function TableAddFieldTbody(Table,liIndex, status)
+async function TableAddFieldRowTbody(Table,liIndex, status)
 {
     try {
         let TableTbodyData_array = TableTbodyData(Table);
         let add_array = [];
         let add_td = [];
         let tbody_array = [];
+
+        console.log("status : " + status);
+
+        //新增列表使用
+        if(status == "row_add")
+        {
+            //(2.)處理新增加的資料
+            let Add_array = TableTbodyData_array[liIndex];
+            //(3.)將他插入
+            TableTbodyData_array.splice(liIndex,0,Add_array);
+        }
+
+        //移除欄位使用
+        if(status == "row_del")
+        {
+            //將資料移除
+            TableTbodyData_array.splice(liIndex,1);
+        }
 
         //新增欄位使用
         if(status == "add")
@@ -483,9 +501,7 @@ async function TableAddFieldTbody(Table,liIndex, status)
             }
         }
 
-        console.log('新增後取得的結果');
-        console.log(TableTbodyData_array);
-        console.log(status);
+
 
         //移除欄位使用
         if(status == 'del')
@@ -577,10 +593,12 @@ async function TableAddFieldTbody(Table,liIndex, status)
             tbody_array[i] = obj;
         }
         newjson['tbody'] = tbody_array;
+        console.log("tbody_array");
+        console.log(tbody_array);
         return true
     }catch(e)
     {
-        console.error('表格內容生成失敗，請檢查 TableAddFieldTbody()');
+        console.error('表格內容生成失敗，請檢查 TableAddFieldRowTbody()');
         return false;
     }
 }
@@ -600,7 +618,7 @@ async function AddTableShow(Table,thparents,liIndex)
 
     let promise2 = await new Promise((resolve,reject)=>{
         //生成內容
-        let TableBody = TableAddFieldTbody(Table,liIndex,'add');
+        let TableBody = TableAddFieldRowTbody(Table,liIndex,'add');
         if(TableBody)
         {
             resolve('Finish');
@@ -654,7 +672,7 @@ async function DelTableShow(Table,thparents,liIndex)
     let promise2 = await new Promise((resolve,reject)=>{
         //移除內容
         //let TableBody = TableDelFieldTbody(Table,liIndex);
-        let TableBody = TableAddFieldTbody(Table,liIndex, 'del');
+        let TableBody = TableAddFieldRowTbody(Table,liIndex, 'del');
         if(TableBody)
         {
             resolve('Finish');
@@ -746,7 +764,9 @@ async function AddRowTableShow(Table,tbody_tr,tdposition,tr_index,td_index)
 
     let promise2 = await new Promise((resolve,reject)=>{
         //新增列表 - 處理內容
-        let TableBody = TableAddRowTbody(Table,tbody_tr,tr_index,'row_add');
+        let TableBody = TableAddFieldRowTbody(Table,tr_index,'row_add');
+        console.log("TableBody?????哪來的0");
+        console.log(TableBody);
         if(TableBody)
         {
             resolve('Finish');
@@ -817,170 +837,170 @@ function TableAddRowTheader(Table)
 }
 
 //新增列表 - 處理內容
-function TableAddRowTbody(Table,tbody_tr,tr_index,status)
-{
-    let TableTbodyData_array = TableTbodyData(Table);
-    let add_array = [];
-    let add_td = [];
-    let tbody_array = [];
+// function TableAddRowTbody(Table,tbody_tr,tr_index,status)
+// {
+//     let TableTbodyData_array = TableTbodyData(Table);
+//     let add_array = [];
+//     let add_td = [];
+//     let tbody_array = [];
 
-    //新增欄位使用
-    if(status == 'row_add')
-    {
-        //(2.)處理新增加的資料
-        let Add_array = TableTbodyData_array[tr_index];
-        //(3.)將他插入
-        TableTbodyData_array.splice(tr_index,0,Add_array);
+//     //新增欄位使用
+//     if(status == 'row_add')
+//     {
+//         //(2.)處理新增加的資料
+//         let Add_array = TableTbodyData_array[tr_index];
+//         //(3.)將他插入
+//         TableTbodyData_array.splice(tr_index,0,Add_array);
 
-    }
+//     }
 
-    //移除欄位使用
-    if(status == 'del')
-    {
-        //將資料移除
-        TableTbodyData_array.splice(tr_index,1);
-    }
+//     //移除欄位使用
+//     if(status == "row_del")
+//     {
+//         //將資料移除
+//         TableTbodyData_array.splice(tr_index,1);
+//     }
 
-    //取得正常的 td 長度
-    let length = newjson.theader.length;
+//     //取得正常的 td 長度
+//     let length = newjson.theader.length;
 
-    //整理資料
-    for(let i=0; i<TableTbodyData_array.length; i++)
-    {
-        const obj = {};
-        for(let j=0; j<TableTbodyData_array[i].length; j++)
-        {
-            if( (j+1) <= length )
-            {
-                const key = "t" + (j+1);
-                obj[key] = TableTbodyData_array[i][j];
-            }
+//     //整理資料
+//     for(let i=0; i<TableTbodyData_array.length; i++)
+//     {
+//         const obj = {};
+//         for(let j=0; j<TableTbodyData_array[i].length; j++)
+//         {
+//             if( (j+1) <= length )
+//             {
+//                 const key = "t" + (j+1);
+//                 obj[key] = TableTbodyData_array[i][j];
+//             }
 
-            if( (j+1) > length ){
-                //多餘的資料檢查，如果有合併欄位資訊就寫進去
-                if(TableTbodyData_array[i][j].rowspan)
-                {
-                    let rowspan_index = TableTbodyData_array[i][j].rowspan_index;
-                    let rowspan =  TableTbodyData_array[i][j].rowspan;
-                    //如果是添加欄位，合併欄位+1
-                    if(((rowspan_index - 1) > liIndex) && status == 'add')
-                    {
-                        rowspan_index = Number(TableTbodyData_array[i][j].rowspan_index) + 1;
-                    }
+//             if( (j+1) > length ){
+//                 //多餘的資料檢查，如果有合併欄位資訊就寫進去
+//                 if(TableTbodyData_array[i][j].rowspan)
+//                 {
+//                     let rowspan_index = TableTbodyData_array[i][j].rowspan_index;
+//                     let rowspan =  TableTbodyData_array[i][j].rowspan;
+//                     //如果是添加欄位，合併欄位+1
+//                     if(((rowspan_index - 1) > liIndex) && status == 'add')
+//                     {
+//                         rowspan_index = Number(TableTbodyData_array[i][j].rowspan_index) + 1;
+//                     }
 
-                    //如果是移除欄位，如果是同一個欄位，就不要寫入了
-                    if(((rowspan_index - 1) == liIndex) && status == 'del')
-                    {
-                        rowspan_index = "";
-                        rowspan = "";
-                    }
+//                     //如果是移除欄位，如果是同一個欄位，就不要寫入了
+//                     if(((rowspan_index - 1) == liIndex) && status == 'del')
+//                     {
+//                         rowspan_index = "";
+//                         rowspan = "";
+//                     }
 
-                    //如果是移除欄位，如果小於合併所在位置，就減1
-                    if(((rowspan_index - 1) > liIndex) && status == 'del')
-                    {
-                        rowspan_index = Number(TableTbodyData_array[i][j].rowspan_index) - 1;
-                    }
+//                     //如果是移除欄位，如果小於合併所在位置，就減1
+//                     if(((rowspan_index - 1) > liIndex) && status == 'del')
+//                     {
+//                         rowspan_index = Number(TableTbodyData_array[i][j].rowspan_index) - 1;
+//                     }
 
 
-                    obj["rowspan"] = rowspan;
-                    obj["rowspan_index"] = rowspan_index;
-                }
-                //判斷class 寫入
-                if(TableTbodyData_array[i][j].class)
-                {
-                    obj["class"] = TableTbodyData_array[i][j].class;
-                }
+//                     obj["rowspan"] = rowspan;
+//                     obj["rowspan_index"] = rowspan_index;
+//                 }
+//                 //判斷class 寫入
+//                 if(TableTbodyData_array[i][j].class)
+//                 {
+//                     obj["class"] = TableTbodyData_array[i][j].class;
+//                 }
 
-                //判斷列表合併
-                if(TableTbodyData_array[i][j].colspan)
-                {
-                    let colspan = TableTbodyData_array[i][j].colspan;
-                    let colspan_index = TableTbodyData_array[i][j].colspan_index;
-                    if((colspan_index - 1) > liIndex && status == 'add')
-                    {
-                        colspan_index = Number(TableTbodyData_array[i][j].colspan_index) +1;
-                    }
-                    //如果是移除欄位，如果是同一個欄位，就不要寫入了
-                    if(((colspan_index - 1) == liIndex) && status == 'del')
-                    {
-                        colspan = "";
-                        colspan_index = "";
-                    }
+//                 //判斷列表合併
+//                 if(TableTbodyData_array[i][j].colspan)
+//                 {
+//                     let colspan = TableTbodyData_array[i][j].colspan;
+//                     let colspan_index = TableTbodyData_array[i][j].colspan_index;
+//                     if((colspan_index - 1) > liIndex && status == 'add')
+//                     {
+//                         colspan_index = Number(TableTbodyData_array[i][j].colspan_index) +1;
+//                     }
+//                     //如果是移除欄位，如果是同一個欄位，就不要寫入了
+//                     if(((colspan_index - 1) == liIndex) && status == 'del')
+//                     {
+//                         colspan = "";
+//                         colspan_index = "";
+//                     }
 
-                    //如果是移除欄位，如果小於合併所在位置，就減1
-                    if(((colspan_index - 1) > liIndex) && status == 'del')
-                    {
-                        colspan_index = Number(TableTbodyData_array[i][j].colspan_index) - 1;
-                    }
+//                     //如果是移除欄位，如果小於合併所在位置，就減1
+//                     if(((colspan_index - 1) > liIndex) && status == 'del')
+//                     {
+//                         colspan_index = Number(TableTbodyData_array[i][j].colspan_index) - 1;
+//                     }
 
-                    obj["colspan"] = colspan;
-                    obj["colspan_index"] = colspan_index;
-                }
-            }
-        }
-        tbody_array[i] = obj;
-    }
-    newjson['tbody'] = tbody_array;
-    console.log(newjson.tbody);
-    return true
+//                     obj["colspan"] = colspan;
+//                     obj["colspan_index"] = colspan_index;
+//                 }
+//             }
+//         }
+//         tbody_array[i] = obj;
+//     }
+//     newjson['tbody'] = tbody_array;
+//     console.log(newjson.tbody);
+//     return true
 
-    // try{
-    //     console.log(status);
-    //     //(1.) 先將所有資料存入陣列
-    //     let tbody_tr_array = [];
-    //     let td_array = [];
-    //     let tbody_array = [];
+//     // try{
+//     //     console.log(status);
+//     //     //(1.) 先將所有資料存入陣列
+//     //     let tbody_tr_array = [];
+//     //     let td_array = [];
+//     //     let tbody_array = [];
 
-    //     //取得td長度，怕有合併格的問題，所以取原始資料
-    //     const td_length = newjson.theader.length;
-    //     //將頁面資料整理起來
-    //     for(let i=0; i<tbody_tr.length; i++)
-    //     {
-    //         for(let j=0; j<td_length; j++)
-    //         {
-    //             td_array[j] = tbody_tr[i].querySelectorAll('td')[j].querySelector('input').value;
-    //         }
+//     //     //取得td長度，怕有合併格的問題，所以取原始資料
+//     //     const td_length = newjson.theader.length;
+//     //     //將頁面資料整理起來
+//     //     for(let i=0; i<tbody_tr.length; i++)
+//     //     {
+//     //         for(let j=0; j<td_length; j++)
+//     //         {
+//     //             td_array[j] = tbody_tr[i].querySelectorAll('td')[j].querySelector('input').value;
+//     //         }
 
-    //         tbody_tr_array[i] = td_array;
-    //         td_array = [];
-    //     }
+//     //         tbody_tr_array[i] = td_array;
+//     //         td_array = [];
+//     //     }
 
-    //     //如果是要新增加一欄
-    //     if(status == 'row_add')
-    //     {
-    //         //(2.)處理新增加的資料
-    //         let Add_array = tbody_tr_array[tr_index];
-    //         //(3.)將他插入
-    //         tbody_tr_array.splice(tr_index,0,Add_array);
-    //     }
+//     //     //如果是要新增加一欄
+//     //     if(status == 'row_add')
+//     //     {
+//     //         //(2.)處理新增加的資料
+//     //         let Add_array = tbody_tr_array[tr_index];
+//     //         //(3.)將他插入
+//     //         tbody_tr_array.splice(tr_index,0,Add_array);
+//     //     }
 
-    //      //如果是要移除一欄
-    //      if(status == 'row_del')
-    //      {
-    //         tbody_tr_array.splice(tr_index,1);
-    //      }
+//     //      //如果是要移除一欄
+//     //      if(status == 'row_del')
+//     //      {
+//     //         tbody_tr_array.splice(tr_index,1);
+//     //      }
 
-    //     //(4.)將資料整理成正確json
-    //     for(let i=0; i<tbody_tr_array.length;i++)
-    //     {
-    //         const obj = {};
-    //         for(let j=0; j<tbody_tr_array[i].length;j++)
-    //         {
-    //             const key = "t"+(j+1);
-    //             obj[key] = tbody_tr_array[i][j];
-    //         }
-    //         tbody_array[i] = obj;
-    //     }
+//     //     //(4.)將資料整理成正確json
+//     //     for(let i=0; i<tbody_tr_array.length;i++)
+//     //     {
+//     //         const obj = {};
+//     //         for(let j=0; j<tbody_tr_array[i].length;j++)
+//     //         {
+//     //             const key = "t"+(j+1);
+//     //             obj[key] = tbody_tr_array[i][j];
+//     //         }
+//     //         tbody_array[i] = obj;
+//     //     }
 
-    //     newjson['tbody'] = tbody_array;
-    //     return true
-    // }
-    // catch(e)
-    // {
-    //     console.error("新增一列內容 TableAddRowTbody() 發生錯誤，請檢查");
-    //     return false
-    // }
-}
+//     //     newjson['tbody'] = tbody_array;
+//     //     return true
+//     // }
+//     // catch(e)
+//     // {
+//     //     console.error("新增一列內容 TableAddRowTbody() 發生錯誤，請檢查");
+//     //     return false
+//     // }
+// }
 
 
 //移除列
@@ -997,7 +1017,7 @@ async function DelRowTableShow(Table,tbody_tr,tr_index)
 
     let promise2 = await new Promise((resolve,reject)=>{
         //移除列表 - 處理內容
-        let TableBody = TableAddRowTbody(tbody_tr,tr_index,'row_del');
+        let TableBody = TableAddFieldRowTbody(Table,tr_index,'row_del');
         if(TableBody)
         {
             resolve('Finish');
