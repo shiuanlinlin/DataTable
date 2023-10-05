@@ -914,13 +914,13 @@ function TableTbodyData(Table)
     let tbody = Table.querySelector('tbody');
     let tbody_tr = tbody.querySelectorAll('tr');
     let id = Table.id;
-    //取得目前是幾欄位
-    let field = DataTableShow.columns().count();
-    //取得目前是幾列
-    let row = DataTableShow.rows().count();
+    // //取得目前是幾欄位
+    // let field = DataTableShow.columns().count();
+    // //取得目前是幾列
+    // let row = DataTableShow.rows().count();
 
     let tbody_tr_array = [];
-    let td_array = [];
+    //let td_array = [];
     let array = [];
     let RowspanArray = [];
 
@@ -1008,7 +1008,7 @@ function TableTbodyData(Table)
 
                 //找出自己(回寫合併資訊)
                 //插入合併資訊
-                let rowspanobj = {"rowspan": rowspan + 1};
+                let rowspanobj = {"rowspan": rowspan};
                 let rowspanindexobj = {"rowspan_index": rowspan_index + 1};
                 tbody_tr_array[tr_index].splice(td_length,0,rowspanobj);
                 tbody_tr_array[tr_index].splice((td_length+1),0,rowspanindexobj);
