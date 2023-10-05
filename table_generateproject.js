@@ -179,7 +179,11 @@ function TableDataShow(id,json,status) {
                     <img src="./img/down-long-solid-green.svg" class="dropdown_righticon" alt="向下合併">
                     向下合併
                 </button>
-                <button type="button" data-table="del_column" class="dropdown-item">
+                <button type="button" data-table="cancel_merge" class="dropdown-item">
+                    <img src="./img/xmark-solid.svg" class="dropdown_delicon" alt="取消合併">
+                    取消合併
+                </button>
+                <button type="button" data-table="del_column" class="dropdown-item text-danger">
                     <img src="./img/xmark-solid.svg" class="dropdown_delicon" alt="移除此列">
                     移除此列
                 </button>
@@ -291,7 +295,7 @@ function TableDataShow(id,json,status) {
     //繪製
     DataTableShow.draw();
 
-    //儲存格處理
+    ///16.儲存格處理
     ColspanHtml(id);
 }
 
@@ -430,6 +434,11 @@ function DataTableOtherButton(id,tableid)
                 case "colspan_merge":
                     let position_array = TDposition(Table,target);
                     ColspanMerge(Table,position_array);
+                    break;
+                //取消合併
+                case "cancel_merge":
+                    let position_array2 = TDposition(Table,target);
+                    CancelMerge(Table,position_array2);
                     break;
             }
         });
@@ -619,7 +628,6 @@ async function TableAddFieldRowTbody(Table,liIndex, status)
             tbody_array[i] = obj;
         }
         newjson['tbody'] = tbody_array;
-        console.log(newjson.tbody);
         return true
     }catch(e)
     {
@@ -1200,7 +1208,6 @@ function ColspanMerge(Table,position_array){
             let tbody_tr_all = tbody_all.querySelectorAll('tr');
             for(let i=1; i<rowspan_length; i++)
             {
-                console.log(tbody_tr_all[tr_index + i].querySelectorAll('td')[td_index]);
                 tbody_tr_all[tr_index + i].querySelectorAll('td')[td_index].remove();
             }
 
@@ -1242,7 +1249,7 @@ function TDposition(Table,target)
     return array;
 }
 
-//儲存格處理
+//16.儲存格處理
 function ColspanHtml(id)
 {
     const Table = document.getElementById(id);
@@ -1295,8 +1302,6 @@ function ColspanHtml(id)
         }
     }
 
-    console.log(array);
-
     //取得資料後開始處理
     if(array.length > 0)
     {
@@ -1305,7 +1310,6 @@ function ColspanHtml(id)
 
             if(array[i].rowspan > 1)
             {
-                //console.log(array[i]);
                 //先取得目前在第幾個
                 const tr_index = array[i].tr_index;
                 const td_length = array[i].td_length;
@@ -1342,15 +1346,6 @@ function ColspanHtml(id)
                     }
                 }
 
-
-
-                console.log(" 共有三列需要處理 : " + rowspan);
-                console.log(" 目前處理了 : " + 1 + " 列 ");
-
-                console.log(" tr_index : " + tr_index);
-                console.log(" rowspan : " + rowspan);
-                console.log(" rowspan_index : " + rowspan_index);
-
             }
 
             if(!array[i].rowspan || array[i].rowspan == 1 )
@@ -1375,18 +1370,117 @@ function ColspanHtml(id)
                 {
                     td[colspan_index + i].remove();
                 }
-
-                // console.log("全部四格，合併兩格，變成 :" +box_number);
-                // console.log("全部四格，扣掉三格，多:" +All_box);
-                // console.log(colspan_index);
-                // console.log(tbody_tr[tr_index]);
-                // console.log(" td_length : " + td_length);
-                // console.log(" colspan : " + colspan);
-                // console.log(" colspan_index : " + colspan_index);
-
             }
         }
     }
+
+
+
+}
+
+//17.取消合併
+function CancelMerge(Table,position_array)
+{
+    //(1.)找出目前位置
+    let tr_position = position_array.trposition;
+    let td_position = position_array.tdposition;
+    let tr_index = position_array.tr_index;
+    let td_index = position_array.td_index;
+
+    let Tbody = Table.querySelector('tbody');
+    let Tr = Tbody.querySelectorAll('tr');
+
+    //取得一列正常數量
+    let td_number = newjson.theader.length == 0 ? jsonDataTable.theader.length : newjson.theader.length;
+    console.log(td_number);
+
+    console.log(position_array);
+    console.log(td_position);
+
+    console.log(" tr_index : " + tr_index);
+    console.log(" td_index : " + td_index);
+
+    //查看目前位置是否有合併格
+    if(td_position.getAttribute('colspan') > 1 && (!td_position.getAttribute('rowspan') || td_position.getAttribute('rowspan') == 1) )
+    {
+        let colspan = Number(td_position.getAttribute('colspan')) - 1;
+        td_position.removeAttribute('colspan');
+        td_position.removeAttribute('colspan_index');
+        //補上缺的格子
+        for(let i=0; i<colspan; i++)
+        {
+            let td_Tag = document.createElement('td');
+            let inpuHtml = `<input type="text" value="--">`;
+            td_Tag.innerHTML = inpuHtml;
+            td_position.after(td_Tag);
+        }
+    }
+
+    //縱向合併
+    if(td_position.getAttribute('rowspan') > 1 && (!td_position.getAttribute('colspan') || td_position.getAttribute('colspan') == 1) )
+    {
+        //取得合併的格數
+        const rowspan = Number(td_position.getAttribute('rowspan'));
+        const rowspan_index = Number(td_position.getAttribute('rowspan_index')) - 1;
+        console.log(rowspan_index);
+        td_position.removeAttribute('rowspan');
+        td_position.removeAttribute('rowspan_index');
+
+        //補上缺的格子
+        for(let i=1; i<rowspan; i++)
+        {
+            let td_Tag = document.createElement('td');
+            let inpuHtml = `<input type="text" value="--">`;
+            td_Tag.innerHTML = inpuHtml;
+            Tr[tr_index + i].querySelectorAll('td')[rowspan_index].before(td_Tag);
+        }
+    }
+
+    //縱向與橫向合併
+    if(td_position.getAttribute('rowspan') > 1 && td_position.getAttribute('colspan') > 1)
+    {
+        //取得合併的格數
+        const rowspan = Number(td_position.getAttribute('rowspan'));
+        const rowspan_index = Number(td_position.getAttribute('rowspan_index')) - 1;
+
+        td_position.removeAttribute('rowspan');
+        td_position.removeAttribute('rowspan_index');
+
+        let colspan = Number(td_position.getAttribute('colspan')) - 1;
+        let colspan_index = Number(td_position.getAttribute('colspan_index')) - 1;
+        td_position.removeAttribute('colspan');
+        td_position.removeAttribute('colspan_index');
+
+        console.log(rowspan_index);
+        console.log(colspan_index);
+
+        //補上缺的格子
+        for(let j=0; j<colspan; j++)
+        {
+            let td_Tag = document.createElement('td');
+            let inpuHtml = `<input type="text" value="--">`;
+            td_Tag.innerHTML = inpuHtml;
+            td_position.after(td_Tag);
+        }
+
+        //補上缺的格子
+        for(let i=1; i<rowspan; i++)
+        {
+            let td_box = Tr[tr_index + i].querySelectorAll('td')[colspan_index];
+            //補上缺的格子
+            for(let j=0; j<colspan + 1; j++)
+            {
+                let td_Tag = document.createElement('td');
+                let inpuHtml = `<input type="text" value="--">`;
+                td_Tag.innerHTML = inpuHtml;
+                td_box.before(td_Tag);
+            }
+        }
+
+    }
+
+
+
 
 
 
