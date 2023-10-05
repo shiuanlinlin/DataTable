@@ -107,6 +107,18 @@ let class_array = [];
 //DataTableJsonShow(Table)
 //13.抓取表頭資料
 //TableTHeadData(Table)
+//14.向右合併
+//ColspanMerge(Table,position_array)
+//15.抓出目前表格td所在位置
+// TDposition(Table,target)
+//16.儲存格處理
+//ColspanHtml(id)
+//17.取消合併
+//CancelMerge(Table,position_array)
+//18.取得合併格的資料(只有處理列表與列表和欄位，沒有單獨處理欄位)
+//ColspanRowspanArray(id);
+//19.取得單獨欄位的合併資訊
+//OnlyRowspanArray(Table)
 
 
 $(document).ready(function(){
@@ -296,7 +308,10 @@ function TableDataShow(id,json,status) {
     DataTableShow.draw();
 
     ///16.儲存格處理
-    ColspanHtml(id);
+    if(json.tbody.length>0)
+    {
+        ColspanHtml(id);
+    }
 }
 
 //2.按鈕功能作用
@@ -491,8 +506,16 @@ function TableAddFieldTheader(thparents,liIndex)
 //4.生成內容(產生tbody)
 async function TableAddFieldRowTbody(Table,liIndex, status)
 {
-    try {
-        let TableTbodyData_array = TableTbodyData(Table);
+    let TableTbodyData_array = [];
+    let promise1 = await new Promise((resolve,reject)=>{
+        TableTbodyData_array = TableTbodyData(Table);
+        if(TableTbodyData_array.length > 0)
+        {
+            resolve('TableTbodyData_ok');
+        }
+    });
+
+    let promise2 = await new Promise((resolve,reject)=>{
         let add_array = [];
         let add_td = [];
         let tbody_array = [];
@@ -557,83 +580,51 @@ async function TableAddFieldRowTbody(Table,liIndex, status)
             const obj = {};
             for(let j=0; j<TableTbodyData_array[i].length; j++)
             {
-                if( (j+1) <= length )
+                if(!TableTbodyData_array[i][j]['colspan'] && !TableTbodyData_array[i][j]['colspan_index'] && !TableTbodyData_array[i][j]['rowspan'] && !TableTbodyData_array[i][j]['rowspan_index'] && !TableTbodyData_array[i][j]['class'])
                 {
-                    const key = "t" + (j+1);
+                    const key = "t"+(j+1);
                     obj[key] = TableTbodyData_array[i][j];
                 }
-
-                if( (j+1) > length ){
-                    //多餘的資料檢查，如果有合併欄位資訊就寫進去
-                    if(TableTbodyData_array[i][j].rowspan)
+                if(TableTbodyData_array[i][j]['colspan'] || TableTbodyData_array[i][j]['colspan_index'] || TableTbodyData_array[i][j]['rowspan'] || TableTbodyData_array[i][j]['rowspan_index'] || TableTbodyData_array[i][j]['class'])
+                {
+                    if(TableTbodyData_array[i][j]['colspan'])
                     {
-                        let rowspan_index = TableTbodyData_array[i][j].rowspan_index;
-                        let rowspan =  TableTbodyData_array[i][j].rowspan;
-                        //如果是添加欄位，合併欄位+1
-                        if(((rowspan_index - 1) > liIndex) && status == 'add')
-                        {
-                            rowspan_index = Number(TableTbodyData_array[i][j].rowspan_index) + 1;
-                        }
-
-                        //如果是移除欄位，如果是同一個欄位，就不要寫入了
-                        if(((rowspan_index - 1) == liIndex) && status == 'del')
-                        {
-                            rowspan_index = "";
-                            rowspan = "";
-                        }
-
-                        //如果是移除欄位，如果小於合併所在位置，就減1
-                        if(((rowspan_index - 1) > liIndex) && status == 'del')
-                        {
-                            rowspan_index = Number(TableTbodyData_array[i][j].rowspan_index) - 1;
-                        }
-
-
-                        obj["rowspan"] = rowspan;
-                        obj["rowspan_index"] = rowspan_index;
-                    }
-                    //判斷class 寫入
-                    if(TableTbodyData_array[i][j].class)
-                    {
-                        obj["class"] = TableTbodyData_array[i][j].class;
+                        const key = "colspan";
+                        obj[key] = TableTbodyData_array[i][j]['colspan'];
                     }
 
-                    //判斷列表合併
-                    if(TableTbodyData_array[i][j].colspan)
+                    if(TableTbodyData_array[i][j]['colspan_index'])
                     {
-                        let colspan = TableTbodyData_array[i][j].colspan;
-                        let colspan_index = TableTbodyData_array[i][j].colspan_index;
-                        if((colspan_index - 1) > liIndex && status == 'add')
-                        {
-                            colspan_index = Number(TableTbodyData_array[i][j].colspan_index) +1;
-                        }
-                        //如果是移除欄位，如果是同一個欄位，就不要寫入了
-                        if(((colspan_index - 1) == liIndex) && status == 'del')
-                        {
-                            colspan = "";
-                            colspan_index = "";
-                        }
-
-                        //如果是移除欄位，如果小於合併所在位置，就減1
-                        if(((colspan_index - 1) > liIndex) && status == 'del')
-                        {
-                            colspan_index = Number(TableTbodyData_array[i][j].colspan_index) - 1;
-                        }
-
-                        obj["colspan"] = colspan;
-                        obj["colspan_index"] = colspan_index;
+                        const key = "colspan_index";
+                        obj[key] = TableTbodyData_array[i][j]['colspan_index'];
                     }
+
+                    if(TableTbodyData_array[i][j]['rowspan'])
+                    {
+                        const key = "rowspan";
+                        obj[key] = TableTbodyData_array[i][j]['rowspan'];
+                    }
+
+                    if(TableTbodyData_array[i][j]['rowspan_index'])
+                    {
+                        const key = "rowspan_index";
+                        obj[key] = TableTbodyData_array[i][j]['rowspan_index'];
+                    }
+
+                    if(TableTbodyData_array[i][j]['class'])
+                    {
+                        const key = "class";
+                        obj[key] = TableTbodyData_array[i][j]['class'];
+                    }
+
                 }
             }
+
             tbody_array[i] = obj;
         }
         newjson['tbody'] = tbody_array;
         return true
-    }catch(e)
-    {
-        console.error('表格內容生成失敗，請檢查 TableAddFieldRowTbody()');
-        return false;
-    }
+    });
 }
 
 
@@ -919,183 +910,178 @@ async function DelRowTableShow(Table,tbody_tr,tr_index)
 //11.取得tbody資料
 function TableTbodyData(Table)
 {
-    try{
-        //1.取得表格 tr
-        let tbody = Table.querySelector('tbody');
-        let tbody_tr = tbody.querySelectorAll('tr');
+    //1.取得表格 tr
+    let tbody = Table.querySelector('tbody');
+    let tbody_tr = tbody.querySelectorAll('tr');
+    let id = Table.id;
+    //取得目前是幾欄位
+    let field = DataTableShow.columns().count();
+    //取得目前是幾列
+    let row = DataTableShow.rows().count();
 
-        //2.先存取未處理的資料
-        let tbody_tr_array = [];
-        let tbody_td_array = [];
+    let tbody_tr_array = [];
+    let td_array = [];
+    let array = [];
+    let RowspanArray = [];
 
-        //取得目前是幾欄位
-        let field = DataTableShow.columns().count();
-        //取得目前是幾列
-        let row = DataTableShow.rows().count();
+     //18.取得合併格的資料(只有處理列表與列表和欄位，沒有單獨處理欄位)
+     array = ColspanRowspanArray(id);
 
-        //判斷是否要開始讀前一個資料
-        let rowspan_number = 0;
-        let colspan_number = 0;
+    //19.取得單獨欄位的合併資訊
+    RowspanArray = OnlyRowspanArray(Table);
 
-        //合併資料
-        let rowspan_data = [];
-        let colspan_data = [];
-        //class資料
-        let class_data = [];
-
-        //先取得頁面舊資料
-        for(let i=0; i<row; i++)
-        {
-            //有合併欄位，下一項要處理
-            if(rowspan_number > 0)
-            {
-                for(let j=0; j<field; j++)
-                {
-                    let index = (j-1) > -1 ? (j-1) : 0;
-                    const td_tag = tbody_tr[i].querySelectorAll('td')[index];
-                    let td_input = "--rowspan--";
-                    if(td_tag)
-                    {
-                        td_input = td_tag.querySelector('input').value;
-                    }
-                    tbody_td_array.push(td_input);
-
-                }
-                //處理完這一行，取消
-                rowspan_number = rowspan_number - 1;
-            }
-
-            //沒有合併欄位
-            if(rowspan_number == 0)
-            {
-                for(let j=0; j<field; j++)
-                {
-                    const td_tag = tbody_tr[i].querySelectorAll('td')[j];
-
-                    if(colspan_number > 0)
-                    {
-                        //橫向合併會少一欄位
-                        let index = (j-1) > -1 ? (j-1) : 0;
-                        const td_tag = tbody_tr[i].querySelectorAll('td')[index];
-                        let td_input = "--colspan--";
-                        if(td_tag)
-                        {
-                            td_input = td_tag.querySelector('input').value;
-                        }
-                            tbody_td_array.push(td_input);
-                            colspan_number = colspan_number - 1;
-                    }
-
-                    if(colspan_number == 0)
-                    {
-                        if(td_tag)
-                        {
-                            let td_input = td_tag.querySelector('input').value;
-                            tbody_td_array.push(td_input);
-
-                            //判斷是否有合併欄位
-                            if(td_tag.getAttribute('rowspan') > 1)
-                            {
-                                //有的話紀錄進去
-                                rowspan_data['tr_index'] = i;
-                                rowspan_data['td_index'] = j;
-                                rowspan_data['rowspan'] = td_tag.getAttribute('rowspan');
-                                rowspan_data['rowspan_index'] = td_tag.getAttribute('rowspan_index');
-                                rowspan_array.push(rowspan_data);
-                                rowspan_number = Number(td_tag.getAttribute('rowspan')) - 1;
-                                //使用完，清空
-                                rowspan_data = [];
-                            }
-
-                            //判斷是否有列表合併
-                            if(td_tag.getAttribute('colspan') > 1)
-                            {
-                                //有的話紀錄進去
-                                colspan_data['tr_index'] = i;
-                                colspan_data['td_index'] = j;
-                                colspan_data['colspan'] = td_tag.getAttribute('colspan');
-                                colspan_data['colspan_index'] = td_tag.getAttribute('colspan_index');
-                                colspan_array.push(colspan_data);
-                                colspan_number = Number(td_tag.getAttribute('colspan'));
-                                //使用完，清空
-                                colspan_data = [];
-                            }
-
-                            //判斷是否有class
-                            if(td_tag.className)
-                            {
-                                class_data['tr_index'] = i;
-                                class_data['td_index'] = j;
-                                class_data['class_name'] = td_tag.className;
-                                class_array.push(class_data);
-                                //使用完，清空
-                                class_data = [];
-                            }
-
-                        }
-                        else
-                        {
-                            tbody_td_array.push('這不應該發生');
-                        }
-                    }
-                }
-
-            }
-
-            tbody_tr_array[i] = tbody_td_array;
-            //清空
-            tbody_td_array = [];
-        }
-
-        //看是否有合併欄位的資料，如果有，需要先加進去
-        if(rowspan_array.length > 0)
-        {
-            rowspan_array.forEach(item=>{
-                let tr_index = item.tr_index;
-                const obj = {};
-                obj['rowspan'] = item.rowspan;
-                obj['rowspan_index'] = item.rowspan_index;
-                tbody_tr_array[tr_index].push(obj);
-            });
-            //處理完成清空
-            rowspan_array = [];
-        }
-
-        //看是否有合併欄位的資料，如果有，需要先加進去
-        if(colspan_array.length > 0)
-        {
-            colspan_array.forEach(item=>{
-                let tr_index = item.tr_index;
-                const obj = {};
-                obj['colspan'] = item.colspan;
-                obj['colspan_index'] = item.colspan_index;
-                tbody_tr_array[tr_index].push(obj);
-            });
-            //處理完成清空
-            colspan_array = [];
-        }
-
-        //看是否有class，如果有，需要先加進去
-        if(class_array.length > 0)
-        {
-            class_array.forEach(item=>{
-                let tr_index = item.tr_index;
-                const obj = {};
-                obj['class'] = item.class_name;
-                tbody_tr_array[tr_index].push(obj);
-            });
-            //處理完成清空
-            class_array = [];
-        }
-
-        return tbody_tr_array;
-    }
-    catch(e)
+    //取得頁面上所有資訊
+    for(let i=0; i<tbody_tr.length; i++)
     {
-        console.error("取得tbody資料失敗 TableTbodyData() 發生錯誤，請檢查");
-        return false
+        let td_array = [];
+
+        for(let j=0; j<tbody_tr[i].querySelectorAll('td').length; j++)
+        {
+            let td_tab = tbody_tr[i].querySelectorAll('td')[j];
+            let td_value = td_tab.querySelector('input').value;
+            td_array[j] = td_value;
+        }
+        tbody_tr_array[i] = td_array;
     }
 
+    //處理合併資料
+    //取得資料後開始處理
+    //整合資訊
+    RowspanArray.forEach(item=>{
+        array.push(item);
+    });
+
+    if(array.length > 0)
+    {
+        for(let i=0; i<array.length; i++)
+        {
+            if(array[i].colspan && !array[i].rowspan)
+            {
+                //先取得目前在第幾個
+                let colspan = Number(array[i].colspan) - 1;
+                let colspan_index = Number(array[i].colspan_index);
+                let tr_index = Number(array[i].tr_index);
+                let td_index = Number(array[i].td_index);
+                //取得全部的td數量
+                let td_length = newjson.theader.length;
+                //取得目前資料有幾格
+                let td_data = tbody_tr_array[tr_index].length;
+                //ex: 總數 4 扣掉 目前資料數量3 = 少一格
+                let Allbox = td_length - td_data;
+                //取得目前資料有幾格
+                // console.log("全部的td數量 :" + td_length);
+                // console.log("目前資料數量 :" + td_data);
+                // console.log("目前資料少 :" + Allbox);
+
+                //補上資料
+                //console.log(tbody_tr_array);
+                for(let i=0; i<colspan; i++)
+                {
+                    let index = colspan_index - 1 > -1 ? 0 : colspan_index;
+                    let value_data = tbody_tr_array[tr_index][index];
+                    tbody_tr_array[tr_index].splice(colspan_index+i,0,value_data);
+                }
+
+
+                //插入合併資訊
+                let colspanobj = {"colspan": colspan + 1};
+                let colspanindexobj = {"colspan_index": colspan_index + 1};
+                tbody_tr_array[tr_index].splice((td_length),0,colspanobj);
+                tbody_tr_array[tr_index].splice((td_length + 1),0,colspanindexobj);
+                if(array[i].class)
+                {
+                    let classxobj = {"class": array[i].class};
+                    tbody_tr_array[tr_index].splice((td_length + 2),0,classxobj);
+                }
+                //console.log(tbody_tr_array);
+            }
+
+            if(array[i].rowspan && !array[i].colspan)
+            {
+                //先取得目前在第幾個
+                let rowspan = Number(array[i].rowspan);
+                let rowspan_index = Number(array[i].rowspan_index) - 1;
+                let tr_index = Number(array[i].tr_index);
+                let td_index = Number(array[i].td_index);
+                //取得全部的td數量
+                let td_length = newjson.theader.length;
+
+                //找出自己(回寫合併資訊)
+                //插入合併資訊
+                let rowspanobj = {"rowspan": rowspan + 1};
+                let rowspanindexobj = {"rowspan_index": rowspan_index + 1};
+                tbody_tr_array[tr_index].splice(td_length,0,rowspanobj);
+                tbody_tr_array[tr_index].splice((td_length+1),0,rowspanindexobj);
+                if(array[i].class)
+                {
+                    let classxobj = {"class": array[i].class};
+                    tbody_tr_array[tr_index].splice((td_length + 2),0,classxobj);
+                }
+                for(let i=1; i<rowspan; i++)
+                {
+                    //先取得前一個資料
+                    let index = rowspan_index - 1 > -1 ? rowspan_index-1 : 0;
+                    let value_data = tbody_tr_array[tr_index + i][index];
+                    tbody_tr_array[tr_index + i].splice(rowspan_index,0,value_data);
+                }
+            }
+
+
+
+            if(array[i].rowspan && array[i].colspan)
+            {
+                //先取得目前在第幾個
+                let colspan = Number(array[i].colspan) - 1;
+                let colspan_index = Number(array[i].colspan_index) - 1;
+                let rowspan = Number(array[i].rowspan);
+                let rowspan_index = Number(array[i].rowspan_index) - 1;
+                let tr_index = Number(array[i].tr_index);
+                let td_index = Number(array[i].td_index);
+                //取得全部的td數量
+                let td_length = newjson.theader.length;
+                //取得目前資料有幾格
+                let td_data = tbody_tr_array[tr_index].length;
+                //ex: 總數 4 扣掉 目前資料數量3 = 少一格
+                let Allbox = td_length - td_data;
+
+                for(let i=1; i<colspan+1; i++)
+                {
+                    let index = colspan_index;
+                    let value_data = tbody_tr_array[tr_index][index];
+                    tbody_tr_array[tr_index].splice(colspan_index+i,0,value_data);
+
+                }
+
+                //插入合併資訊
+                let colspanobj = {"colspan": colspan + 1};
+                let colspanindexobj = {"colspan_index": colspan_index + 1};
+                let rowspanobj = {"rowspan": rowspan};
+                let rowspanindexobj = {"rowspan_index": rowspan_index + 1};
+                tbody_tr_array[tr_index].splice((td_length),0,colspanobj);
+                tbody_tr_array[tr_index].splice((td_length + 1),0,colspanindexobj);
+                tbody_tr_array[tr_index].splice((td_length+ 2 ),0,rowspanobj);
+                tbody_tr_array[tr_index].splice((td_length + 3),0,rowspanindexobj);
+                //塞入class
+                if(array[i].class)
+                {
+                    let classxobj = {"class": array[i].class};
+                    tbody_tr_array[tr_index].splice((td_length + 2),0,classxobj);
+                }
+
+                for(let i=1; i<rowspan; i++)
+                {
+                    //先取得前一個資料
+                    for(let j=0; j<colspan+1; j++)
+                    {
+                        let c_index = colspan_index - 1 > -1 ? 0 : colspan_index;
+                        let value_data = tbody_tr_array[tr_index+i][c_index];
+                        tbody_tr_array[tr_index+i].splice(colspan_index+j,0,value_data);
+                    }
+                }
+            }
+        }
+    }
+    return tbody_tr_array;
 }
 
 
@@ -1250,129 +1236,152 @@ function TDposition(Table,target)
 }
 
 //16.儲存格處理
-function ColspanHtml(id)
+async function ColspanHtml(id)
 {
     const Table = document.getElementById(id);
     let tbody_array = Table.querySelector('tbody');
-    let tbody_tr = tbody_array.querySelectorAll('tr');
     let array = [];
-    let colspan_array = [];
 
-    for(let i=0; i<tbody_tr.length; i++)
-    {
-        for(let j=0; j<tbody_tr[i].querySelectorAll('td').length; j++)
+    let promise1 = await new Promise((resolve,reject)=>{
+        //18.取得合併格的資料(只有處理列表與列表和欄位，沒有單獨處理欄位)
+        array = ColspanRowspanArray(id);
+        if(array.length > 0)
         {
-            if(tbody_tr[i].querySelectorAll('td')[j].getAttribute('colspan') > 1 && (!tbody_tr[i].querySelectorAll('td')[j].getAttribute('rowspan')))
-            {
-                let colspan_index = tbody_tr[i].querySelectorAll('td')[j].getAttribute('colspan_index');
-                let colspan = Number(tbody_tr[i].querySelectorAll('td')[j].getAttribute('colspan'));
-
-                colspan_array['colspan_index'] = colspan_index;
-                colspan_array['colspan'] = colspan;
-                colspan_array['tr_index'] = i;
-                colspan_array['td_index'] = j;
-                colspan_array['td_length'] = tbody_tr[i].querySelectorAll('td').length;
-
-                array.push(colspan_array);
-                colspan_array = [];
-            }
-
-            //如果有行數
-            if(tbody_tr[i].querySelectorAll('td')[j].getAttribute('colspan') > 1 && tbody_tr[i].querySelectorAll('td')[j].getAttribute('rowspan') > 1)
-            {
-                let colspan_index = tbody_tr[i].querySelectorAll('td')[j].getAttribute('colspan_index');
-                let colspan = Number(tbody_tr[i].querySelectorAll('td')[j].getAttribute('colspan'));
-
-                let rowspan_index = tbody_tr[i].querySelectorAll('td')[j].getAttribute('rowspan_index');
-                let rowspan = Number(tbody_tr[i].querySelectorAll('td')[j].getAttribute('rowspan'));
-
-                colspan_array['colspan_index'] = colspan_index;
-                colspan_array['colspan'] = colspan;
-                colspan_array['tr_index'] = i;
-                colspan_array['td_index'] = j;
-
-                colspan_array['rowspan_index'] = rowspan_index;
-                colspan_array['rowspan'] = rowspan;
-
-                colspan_array['td_length'] = tbody_tr[i].querySelectorAll('td').length;
-
-                array.push(colspan_array);
-                colspan_array = [];
-            }
+            resolve('ColspanRowspanArray_ok');
         }
-    }
+    });
 
-    //取得資料後開始處理
-    if(array.length > 0)
-    {
-        for(let i=0; i<array.length; i++)
+    let promise2 = await new Promise((resolve,reject)=>{
+        //取得資料後開始處理
+        if(array.length > 0)
         {
-
-            if(array[i].rowspan > 1)
+            for(let i=0; i<array.length; i++)
             {
-                //先取得目前在第幾個
-                const tr_index = array[i].tr_index;
-                const td_length = array[i].td_length;
-                const colspan = array[i].colspan;
-                const colspan_index = Number(array[i].colspan_index);
-
-                const rowspan = Number(array[i].rowspan);
-                const rowspan_index = array[i].rowspan_index;
-
-                //ex:全部四格，合併兩格，變成三格
-                let box_number = (td_length - colspan) + 1;
-                //ex:全部四格，扣掉三格，多一格
-                let All_box = td_length - box_number;
-                //ex:全四格，合併第三格
-                let tr = tbody_array.querySelectorAll('tr')[tr_index];
-                let td = tr.querySelectorAll('td');
-
-                //扣掉多餘的一格或多格
-                for(let j=0; j<All_box; j++)
+                //只有縱向合併
+                if(array[i].rowspan > 1 && !array[i].colspan)
                 {
-                    td[colspan_index + j].remove();
-                }
+                    //先取得目前在第幾個
+                    const tr_index = array[i].tr_index;
+                    const td_length = array[i].td_length;
+                    const colspan = array[i].colspan;
+                    const colspan_index = Number(array[i].colspan_index);
 
-                //縱向處理
-                let rowspan_num = rowspan;
-                for(let j=1; j<rowspan_num; j++)
-                {
-                    let tr_rowspan = tbody_array.querySelectorAll('tr')[tr_index + j];
-                    let td_rowspan = tr_rowspan.querySelectorAll('td');
+                    const rowspan = Number(array[i].rowspan);
+                    const rowspan_index = array[i].rowspan_index;
+
+                    //ex:全部四格，合併兩格，變成三格
+                    let box_number = (td_length - colspan) + 1;
+                    //ex:全部四格，扣掉三格，多一格
+                    let All_box = td_length - box_number;
+                    //ex:全四格，合併第三格
+                    let tr = tbody_array.querySelectorAll('tr')[tr_index];
+                    let td = tr.querySelectorAll('td');
+
                     //扣掉多餘的一格或多格
                     for(let j=0; j<All_box; j++)
                     {
-                        td_rowspan[colspan_index + j].remove();
+                        td[colspan_index + j].remove();
+                    }
+
+                    //縱向處理
+                    let rowspan_num = rowspan;
+                    for(let j=1; j<rowspan_num; j++)
+                    {
+                        let tr_rowspan = tbody_array.querySelectorAll('tr')[tr_index + j];
+                        let td_rowspan = tr_rowspan.querySelectorAll('td');
+                        //扣掉多餘的一格或多格
+                        for(let j=0; j<All_box; j++)
+                        {
+                            td_rowspan[colspan_index + j].remove();
+                        }
+                    }
+
+                }
+
+                if(array[i].colspan > 1 && !array[i].rowspan )
+                {
+                    //console.log(array[i]);
+                    //先取得目前在第幾個
+                    const tr_index = array[i].tr_index;
+                    const td_length = array[i].td_length;
+                    const colspan = array[i].colspan;
+                    const colspan_index = Number(array[i].colspan_index);
+
+                    //ex:全部四格，合併兩格，變成三格
+                    let box_number = (td_length - colspan) + 1;
+                    //ex:全部四格，扣掉三格，多一格
+                    let All_box = td_length - box_number;
+                    //ex:全四格，合併第三格
+                    let tr = tbody_array.querySelectorAll('tr')[tr_index];
+                    let td = tr.querySelectorAll('td');
+
+                    //扣掉多餘的一格或多格
+                    for(let i=0; i<All_box; i++)
+                    {
+                        if(td[colspan_index + i])
+                        {
+                            td[colspan_index + i].remove();
+                        }
                     }
                 }
 
-            }
-
-            if(!array[i].rowspan || array[i].rowspan == 1 )
-            {
-                //console.log(array[i]);
-                //先取得目前在第幾個
-                const tr_index = array[i].tr_index;
-                const td_length = array[i].td_length;
-                const colspan = array[i].colspan;
-                const colspan_index = Number(array[i].colspan_index);
-
-                //ex:全部四格，合併兩格，變成三格
-                let box_number = (td_length - colspan) + 1;
-                //ex:全部四格，扣掉三格，多一格
-                let All_box = td_length - box_number;
-                //ex:全四格，合併第三格
-                let tr = tbody_array.querySelectorAll('tr')[tr_index];
-                let td = tr.querySelectorAll('td');
-
-                //扣掉多餘的一格或多格
-                for(let i=0; i<All_box; i++)
+                //兩個合併格都有
+                if(array[i].rowspan > 1 && array[i].colspan > 1)
                 {
-                    td[colspan_index + i].remove();
+                    //先取得目前在第幾個
+                    const tr_index = array[i].tr_index;
+                    const td_length = array[i].td_length;
+                    let colspan = Number(array[i].colspan);
+                    let colspan_index = Number(array[i].colspan_index) - 1;
+                    let rowspan = Number(array[i].rowspan);
+                    let rowspan_index = Number(array[i].rowspan_index) - 1;
+
+                    let tr_rowspan = tbody_array.querySelectorAll('tr')[tr_index];
+                    let td_rowspan = tr_rowspan.querySelectorAll('td');
+
+                    //總格數
+                    let field = DataTableShow.columns().count();
+                    //取得目前是幾列
+                    let row = DataTableShow.rows().count();
+                    //頁面上td欄位數
+                    let td_Page = td_rowspan.length;
+                    //計算目前頁面上應該要有的格數
+                    let All_box = (td_Page - colspan) + 1;
+                    //目前多的
+                    let redundant = td_Page - All_box;
+                    //總共有四格
+                    //合併了兩格
+                    //所以應該是要剩下三格
+
+                    for(let j=1; j<redundant+1; j++)
+                    {
+                        td_rowspan[colspan_index + j].remove();
+                    }
+
+                    //剩下需要處理的縱向數量
+                    let redundant_rowspan = rowspan;
+                    let merge_colspan = colspan;
+                    //縱向剩餘都會多少一個
+                    let only_td = td_Page - merge_colspan;
+
+                    for(let i=1; i<redundant_rowspan; i++)
+                    {
+                        //先取得總格數td
+                        let Alltd = tbody_array.querySelectorAll('tr')[tr_index+i].querySelectorAll('td');
+                        //用合併數量來解決
+                        for(let j=0; j<Alltd.length; j++)
+                        {
+                            if(j > (only_td - 1))
+                            {
+                                Alltd[j].remove();
+                            }
+
+                        }
+                    }
                 }
             }
         }
-    }
+    });
 
 
 
@@ -1392,13 +1401,6 @@ function CancelMerge(Table,position_array)
 
     //取得一列正常數量
     let td_number = newjson.theader.length == 0 ? jsonDataTable.theader.length : newjson.theader.length;
-    console.log(td_number);
-
-    console.log(position_array);
-    console.log(td_position);
-
-    console.log(" tr_index : " + tr_index);
-    console.log(" td_index : " + td_index);
 
     //查看目前位置是否有合併格
     if(td_position.getAttribute('colspan') > 1 && (!td_position.getAttribute('rowspan') || td_position.getAttribute('rowspan') == 1) )
@@ -1422,7 +1424,6 @@ function CancelMerge(Table,position_array)
         //取得合併的格數
         const rowspan = Number(td_position.getAttribute('rowspan'));
         const rowspan_index = Number(td_position.getAttribute('rowspan_index')) - 1;
-        console.log(rowspan_index);
         td_position.removeAttribute('rowspan');
         td_position.removeAttribute('rowspan_index');
 
@@ -1451,9 +1452,6 @@ function CancelMerge(Table,position_array)
         td_position.removeAttribute('colspan');
         td_position.removeAttribute('colspan_index');
 
-        console.log(rowspan_index);
-        console.log(colspan_index);
-
         //補上缺的格子
         for(let j=0; j<colspan; j++)
         {
@@ -1478,10 +1476,104 @@ function CancelMerge(Table,position_array)
         }
 
     }
+}
 
+//18.取得合併格的資料(只有處理列表與列表和欄位，沒有單獨處理欄位)
+function ColspanRowspanArray(id)
+{
+    const Table = document.getElementById(id);
+    let tbody_array = Table.querySelector('tbody');
+    let tbody_tr = tbody_array.querySelectorAll('tr');
+    let array = [];
+    let colspan_array = [];
 
+    for(let i=0; i<tbody_tr.length; i++)
+    {
+        for(let j=0; j<tbody_tr[i].querySelectorAll('td').length; j++)
+        {
+            if(tbody_tr[i].querySelectorAll('td')[j].getAttribute('colspan') > 1 && (!tbody_tr[i].querySelectorAll('td')[j].getAttribute('rowspan')))
+            {
+                let colspan_index = tbody_tr[i].querySelectorAll('td')[j].getAttribute('colspan_index');
+                let colspan = Number(tbody_tr[i].querySelectorAll('td')[j].getAttribute('colspan'));
+                let classname = tbody_tr[i].querySelectorAll('td')[j].className;
 
+                colspan_array['colspan_index'] = colspan_index;
+                colspan_array['colspan'] = colspan;
+                colspan_array['tr_index'] = i;
+                colspan_array['td_index'] = j;
+                colspan_array['td_length'] = tbody_tr[i].querySelectorAll('td').length;
+                if(classname != "")
+                {
+                    colspan_array['class'] = classname;
+                }
 
+                array.push(colspan_array);
+                colspan_array = [];
+            }
 
+            //如果有行數
+            if(tbody_tr[i].querySelectorAll('td')[j].getAttribute('colspan') > 1 && tbody_tr[i].querySelectorAll('td')[j].getAttribute('rowspan') > 1)
+            {
+                let colspan_index = tbody_tr[i].querySelectorAll('td')[j].getAttribute('colspan_index');
+                let colspan = Number(tbody_tr[i].querySelectorAll('td')[j].getAttribute('colspan'));
 
+                let rowspan_index = tbody_tr[i].querySelectorAll('td')[j].getAttribute('rowspan_index');
+                let rowspan = Number(tbody_tr[i].querySelectorAll('td')[j].getAttribute('rowspan'));
+                let classname = tbody_tr[i].querySelectorAll('td')[j].className;
+
+                colspan_array['colspan_index'] = colspan_index;
+                colspan_array['colspan'] = colspan;
+                colspan_array['tr_index'] = i;
+                colspan_array['td_index'] = j;
+
+                colspan_array['rowspan_index'] = rowspan_index;
+                colspan_array['rowspan'] = rowspan;
+                if(classname != "")
+                {
+                    colspan_array['class'] = classname;
+                }
+
+                colspan_array['td_length'] = tbody_tr[i].querySelectorAll('td').length;
+
+                array.push(colspan_array);
+                colspan_array = [];
+            }
+        }
+    }
+    return array
+}
+
+//19.取得單獨欄位的合併資訊
+function OnlyRowspanArray(Table)
+{
+    let array = [];
+    let tbody = Table.querySelector('tbody');
+    let tbody_tr = tbody.querySelectorAll('tr');
+
+    for(let i=0; i<tbody_tr.length; i++)
+    {
+        let td_array = [];
+
+        for(let j=0; j<tbody_tr[i].querySelectorAll('td').length; j++)
+        {
+            let rowspan = Number(tbody_tr[i].querySelectorAll('td')[j].getAttribute('rowspan'));
+            let rowspan_index = tbody_tr[i].querySelectorAll('td')[j].getAttribute('rowspan_index');
+            let colspan = Number(tbody_tr[i].querySelectorAll('td')[j].getAttribute('colspan'));
+            let classname = tbody_tr[i].querySelectorAll('td')[j].className;
+            if(rowspan > 1 && (!colspan || colspan == 1))
+            {
+                td_array['rowspan'] = rowspan;
+                td_array['rowspan_index'] = rowspan_index;
+                td_array['tr_index'] = i;
+                td_array['td_index'] = j;
+                if(classname != "")
+                {
+                    td_array['class'] = classname;
+                }
+                array.push(td_array);
+            }
+        }
+
+    }
+    return array
 }
