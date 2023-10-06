@@ -509,9 +509,12 @@ function TableAddFieldTheader(thparents,liIndex)
 }
 
 //4.生成內容(產生tbody)
-async function TableAddFieldRowTbody(Table,liIndex, status)
+async function TableAddFieldRowTbody(Table,liIndex,position_array,status)
 {
     let TableTbodyData_array = [];
+    //取得總長度
+    let row = DataTableShow.rows().count();
+
     let promise1 = await new Promise((resolve,reject)=>{
         TableTbodyData_array = TableTbodyData(Table);
         if(TableTbodyData_array.length > 0)
@@ -524,6 +527,62 @@ async function TableAddFieldRowTbody(Table,liIndex, status)
         let add_array = [];
         let add_td = [];
         let tbody_array = [];
+
+        //向下合併
+        if(status == "rowspan_merge")
+        {
+            console.log(position_array);
+            //(1.)取得tr位置
+            const tr_index = position_array.tr_index;
+            const td_index = position_array.td_index;
+            //(2.)取得資料tr位置
+            const tr_data = TableTbodyData_array[tr_index];
+            console.log(tr_data);
+            //(3.)取得合併位置是否是一樣的
+            const rowspanData = tr_data.filter(item=>{
+                return item.rowspan;
+            });
+            //判斷是否本來就有合併的欄位
+            if(rowspanData.length > 0)
+            {
+                const rowspan_index = tr_data.filter(item=>{
+                    return item.rowspan_index;
+                });
+                const rowspanindex = Number(rowspan_index[0].rowspan_index) - 1;
+                const rowspan = Number(rowspanData[0].rowspan);
+
+                //取得目前的位置如果超過表格的數量就不要更動
+                //因為 tr_index是從0開始的，所以要加回去
+                let Tablerow =  (tr_index+1) + rowspan;
+
+                if(rowspanindex == td_index && row >= Tablerow)
+                {
+                    tr_data.forEach(item=>{
+                        if(item.rowspan)
+                        {
+                            item.rowspan = rowspan + 1;
+                        }
+                    });
+                }
+            }
+
+            //如果沒有合併的欄位
+            if(rowspanData.length == 0)
+            {
+                //取得目前的位置如果超過表格的數量就不要更動
+                //因為 tr_index是從0開始的，所以要加回去
+                let first_Tablerow = tr_index+1;
+                if( row >= first_Tablerow )
+                {
+                    //(4.)先找出要合併的資料，給予合併資訊，一次合併一個就可以
+                    const first_rowspan = {"rowspan": 2};
+                    const first_rowspan_index = {"rowspan_index": (td_index+1)};
+                    tr_data.push(first_rowspan);
+                    tr_data.push(first_rowspan_index);
+                }
+            }
+
+        }
 
         //新增列表使用
         if(status == "row_add")
@@ -587,7 +646,7 @@ async function TableAddFieldRowTbody(Table,liIndex, status)
         //取得正常的 td 長度
         let length = newjson.theader.length;
 
-        console.log("整理資料錢");
+        console.log("整理資料前");
         console.log(TableTbodyData_array);
 
         //整理資料
@@ -638,8 +697,11 @@ async function TableAddFieldRowTbody(Table,liIndex, status)
 
             tbody_array[i] = obj;
         }
+
+        console.log("整理資料後");
+        console.log(TableTbodyData_array);
         newjson['tbody'] = tbody_array;
-        return false
+        return true
     });
 }
 
@@ -658,7 +720,7 @@ async function AddTableShow(Table,thparents,liIndex)
 
     let promise2 = await new Promise((resolve,reject)=>{
         //生成內容
-        let TableBody = TableAddFieldRowTbody(Table,liIndex,'add');
+        let TableBody = TableAddFieldRowTbody(Table,liIndex,'','add');
         if(TableBody)
         {
             resolve('Finish');
@@ -710,7 +772,7 @@ async function DelTableShow(Table,thparents,liIndex)
     let promise2 = await new Promise((resolve,reject)=>{
         //移除內容
         //let TableBody = TableDelFieldTbody(Table,liIndex);
-        let TableBody = TableAddFieldRowTbody(Table,liIndex, 'del');
+        let TableBody = TableAddFieldRowTbody(Table,liIndex,'', 'del');
         if(TableBody)
         {
             resolve('Finish');
@@ -802,7 +864,7 @@ async function AddRowTableShow(Table,tbody_tr,tdposition,tr_index,td_index)
 
     let promise2 = await new Promise((resolve,reject)=>{
         //新增列表 - 處理內容
-        let TableBody = TableAddFieldRowTbody(Table,tr_index,'row_add');
+        let TableBody = TableAddFieldRowTbody(Table,tr_index,'','row_add');
         if(TableBody)
         {
             resolve('Finish');
@@ -886,7 +948,7 @@ async function DelRowTableShow(Table,tbody_tr,tr_index)
 
     let promise2 = await new Promise((resolve,reject)=>{
         //移除列表 - 處理內容
-        let TableBody = TableAddFieldRowTbody(Table,tr_index,'row_del');
+        let TableBody = TableAddFieldRowTbody(Table,tr_index,'','row_del');
         if(TableBody)
         {
             resolve('Finish');
@@ -1105,7 +1167,7 @@ function TableTbodyData(Table)
 function DataTableJsonShow(Table)
 {
     TableTHeadData(Table);
-    TableAddFieldRowTbody(Table,0,'');
+    TableAddFieldRowTbody(Table,0);
     console.log(newjson);
     return newjson
 }
@@ -1595,11 +1657,58 @@ function OnlyRowspanArray(Table)
 }
 
 //20.向下合併
-function RowspanMerge(Table,position_array)
+async function RowspanMerge(Table,position_array)
 {
     let liIndex = position_array.td_index;
-    //處理表頭
-    TableAddRowTheader(Table);
-    //處理內容
-    TableAddFieldRowTbody(Table,liIndex, 'rowspan_add');
+    let TableTheader = false;
+    let TableAddFieldRow = false;
+
+    let promise1 = await new Promise((resolve,reject)=>{
+        //處理表頭
+        TableTheader = TableAddRowTheader(Table);
+        if(TableTheader)
+        {
+            resolve('TableAddRowTheader_ok');
+        }
+
+    });
+
+
+    let promise2 = await new Promise((resolve,reject)=>{
+        //處理內容
+        TableAddFieldRow = TableAddFieldRowTbody(Table,liIndex,position_array,'rowspan_merge');
+        if(TableAddFieldRow)
+        {
+            resolve('TableAddFieldRowTbody_ok');
+        }
+    });
+
+    let promise3 = await new Promise((resolve,reject)=>{
+        //測試功能
+        if(demotest_start)
+        {
+            //測試生成次數
+            if(demotest == 1)
+            {
+                DataTableShow.destroy();
+                TableDataShow('table_id',newjson,'backend');
+                demotest = demotest - 1;
+                resolve('json');
+            }
+        }
+        else
+        {
+            //生成表格(正式)
+            DataTableShow.destroy();
+            TableDataShow('table_id',newjson,'backend');
+        }
+    });
+
+    //測試功能：產生json(注意此為測試用)
+    let promise4 = await new Promise((resolve,reject)=>{
+        var currentData = DataTableShow.rows().data().toArray();
+        var jsonData = JSON.stringify(currentData);
+        console.log(jsonData);
+        console.log('測試模式開啟！請注意');
+    });
 }
