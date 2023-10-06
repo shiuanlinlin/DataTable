@@ -80,6 +80,37 @@ let colspan_array = [];
 //判斷是否有class
 let class_array = [];
 
+//後台td功能按鈕
+let tbodymenuTool = `
+        <div class="dropdown">
+            <button class="dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false">
+                <img src="./img/ellipsis-vertical-solid.svg" class="dropdown_menuicon">
+            </button>
+            <div class="dropdown-menu">
+                <button type="button" data-table="bottom_add" class="dropdown-item">
+                    <img src="./img/down-long-solid.svg" class="dropdown_righticon" alt="向下新增一列">
+                    向下新增一列
+                </button>
+                <button type="button" data-table="colspan_merge" class="dropdown-item">
+                    <img src="./img/right-long-solid-green.svg" class="dropdown_colspanicon" alt="向右合併">
+                    向右合併
+                </button>
+                <button type="button" data-table="rowspan_merge" class="dropdown-item">
+                    <img src="./img/down-long-solid-green.svg" class="dropdown_righticon" alt="向下合併">
+                    向下合併
+                </button>
+                <button type="button" data-table="cancel_merge" class="dropdown-item">
+                    <img src="./img/xmark-solid.svg" class="dropdown_delicon" alt="取消合併">
+                    取消合併
+                </button>
+                <button type="button" data-table="del_column" class="dropdown-item text-danger">
+                    <img src="./img/xmark-solid.svg" class="dropdown_delicon" alt="移除此列">
+                    移除此列
+                </button>
+            </div>
+        </div>
+    `;
+
 //頁籤
 //1.生成表格
 //TableDataShow(id,json,status)
@@ -167,37 +198,6 @@ function TableDataShow(id,json,status) {
                 <button type="button" data-table="del_field" class="dropdown-item">
                     <img src="./img/xmark-solid.svg" class="dropdown_delicon" alt="移除此欄位">
                     移除此欄位
-                </button>
-            </div>
-        </div>
-    `;
-
-    //2-1.tbody功能選單(後台用)
-    let tbodymenuTool = `
-        <div class="dropdown">
-            <button class="dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false">
-                <img src="./img/ellipsis-vertical-solid.svg" class="dropdown_menuicon">
-            </button>
-            <div class="dropdown-menu">
-                <button type="button" data-table="bottom_add" class="dropdown-item">
-                    <img src="./img/down-long-solid.svg" class="dropdown_righticon" alt="向下新增一列">
-                    向下新增一列
-                </button>
-                <button type="button" data-table="colspan_merge" class="dropdown-item">
-                    <img src="./img/right-long-solid-green.svg" class="dropdown_colspanicon" alt="向右合併">
-                    向右合併
-                </button>
-                <button type="button" data-table="rowspan_merge" class="dropdown-item">
-                    <img src="./img/down-long-solid-green.svg" class="dropdown_righticon" alt="向下合併">
-                    向下合併
-                </button>
-                <button type="button" data-table="cancel_merge" class="dropdown-item">
-                    <img src="./img/xmark-solid.svg" class="dropdown_delicon" alt="取消合併">
-                    取消合併
-                </button>
-                <button type="button" data-table="del_column" class="dropdown-item text-danger">
-                    <img src="./img/xmark-solid.svg" class="dropdown_delicon" alt="移除此列">
-                    移除此列
                 </button>
             </div>
         </div>
@@ -455,6 +455,11 @@ function DataTableOtherButton(id,tableid)
                     let position_array2 = TDposition(Table,target);
                     CancelMerge(Table,position_array2);
                     break;
+                //向下合併
+                case "rowspan_merge":
+                    let position_array4 = TDposition(Table,target);
+                    RowspanMerge(Table,position_array4);
+                    break;
             }
         });
     }
@@ -525,8 +530,16 @@ async function TableAddFieldRowTbody(Table,liIndex, status)
         {
             //(2.)處理新增加的資料
             let Add_array = TableTbodyData_array[liIndex];
+            //如果有合併格數就關閉
+           let rowsfilter = Add_array.filter((item)=>{
+                return !item.rowspan
+            });
+
+            let rowsindexfilter = rowsfilter.filter((item)=>{
+                return !item.rowspan_index
+            });
             //(3.)將他插入
-            TableTbodyData_array.splice(liIndex,0,Add_array);
+            TableTbodyData_array.splice(liIndex+1,0,rowsindexfilter);
         }
 
         //移除欄位使用
@@ -573,6 +586,9 @@ async function TableAddFieldRowTbody(Table,liIndex, status)
 
         //取得正常的 td 長度
         let length = newjson.theader.length;
+
+        console.log("整理資料錢");
+        console.log(TableTbodyData_array);
 
         //整理資料
         for(let i=0; i<TableTbodyData_array.length; i++)
@@ -623,7 +639,7 @@ async function TableAddFieldRowTbody(Table,liIndex, status)
             tbody_array[i] = obj;
         }
         newjson['tbody'] = tbody_array;
-        return true
+        return false
     });
 }
 
@@ -985,13 +1001,13 @@ function TableTbodyData(Table)
 
                 //插入合併資訊
                 let colspanobj = {"colspan": colspan + 1};
-                let colspanindexobj = {"colspan_index": colspan_index + 1};
-                tbody_tr_array[tr_index].splice((td_length),0,colspanobj);
-                tbody_tr_array[tr_index].splice((td_length + 1),0,colspanindexobj);
+                let colspanindexobj = {"colspan_index": colspan_index};
+                tbody_tr_array[tr_index].push(colspanobj);
+                tbody_tr_array[tr_index].push(colspanindexobj);
                 if(array[i].class)
                 {
                     let classxobj = {"class": array[i].class};
-                    tbody_tr_array[tr_index].splice((td_length + 2),0,classxobj);
+                    tbody_tr_array[tr_index].push(classxobj);
                 }
                 //console.log(tbody_tr_array);
             }
@@ -1010,12 +1026,12 @@ function TableTbodyData(Table)
                 //插入合併資訊
                 let rowspanobj = {"rowspan": rowspan};
                 let rowspanindexobj = {"rowspan_index": rowspan_index + 1};
-                tbody_tr_array[tr_index].splice(td_length,0,rowspanobj);
-                tbody_tr_array[tr_index].splice((td_length+1),0,rowspanindexobj);
+                tbody_tr_array[tr_index].push(rowspanobj);
+                tbody_tr_array[tr_index].push(rowspanindexobj);
                 if(array[i].class)
                 {
                     let classxobj = {"class": array[i].class};
-                    tbody_tr_array[tr_index].splice((td_length + 2),0,classxobj);
+                    tbody_tr_array[tr_index].push(classxobj);
                 }
                 for(let i=1; i<rowspan; i++)
                 {
@@ -1412,7 +1428,7 @@ function CancelMerge(Table,position_array)
         for(let i=0; i<colspan; i++)
         {
             let td_Tag = document.createElement('td');
-            let inpuHtml = `<input type="text" value="--">`;
+            let inpuHtml = `<div class="backend_menu"><input type="text" value="--">${tbodymenuTool}</div>`;
             td_Tag.innerHTML = inpuHtml;
             td_position.after(td_Tag);
         }
@@ -1431,7 +1447,7 @@ function CancelMerge(Table,position_array)
         for(let i=1; i<rowspan; i++)
         {
             let td_Tag = document.createElement('td');
-            let inpuHtml = `<input type="text" value="--">`;
+            let inpuHtml = `<div class="backend_menu"><input type="text" value="--">${tbodymenuTool}</div>`;
             td_Tag.innerHTML = inpuHtml;
             Tr[tr_index + i].querySelectorAll('td')[rowspan_index].before(td_Tag);
         }
@@ -1456,7 +1472,7 @@ function CancelMerge(Table,position_array)
         for(let j=0; j<colspan; j++)
         {
             let td_Tag = document.createElement('td');
-            let inpuHtml = `<input type="text" value="--">`;
+            let inpuHtml = `<div class="backend_menu"><input type="text" value="--">${tbodymenuTool}</div>`;
             td_Tag.innerHTML = inpuHtml;
             td_position.after(td_Tag);
         }
@@ -1469,7 +1485,7 @@ function CancelMerge(Table,position_array)
             for(let j=0; j<colspan + 1; j++)
             {
                 let td_Tag = document.createElement('td');
-                let inpuHtml = `<input type="text" value="--">`;
+                let inpuHtml = `<div class="backend_menu"><input type="text" value="--">${tbodymenuTool}</div>`;
                 td_Tag.innerHTML = inpuHtml;
                 td_box.before(td_Tag);
             }
@@ -1576,4 +1592,14 @@ function OnlyRowspanArray(Table)
 
     }
     return array
+}
+
+//20.向下合併
+function RowspanMerge(Table,position_array)
+{
+    let liIndex = position_array.td_index;
+    //處理表頭
+    TableAddRowTheader(Table);
+    //處理內容
+    TableAddFieldRowTbody(Table,liIndex, 'rowspan_add');
 }
