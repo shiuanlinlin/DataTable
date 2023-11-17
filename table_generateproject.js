@@ -195,6 +195,10 @@ function TableDataShow(id,json,status) {
                     <i class="bi bi-arrow-right-circle-fill text-primary mr-2"></i>
                     向右新增一欄
                 </button>
+                <button type="button" data-table="right_move" class="dropdown-item">
+                    <i class="bi bi-arrow-right-circle text-primary mr-2"></i>
+                    向右移動
+                </button>
                 <button type="button" data-table="del_field" class="dropdown-item">
                     <i class="bi bi-x-circle-fill text-danger mr-2"></i>
                     移除此欄位
@@ -332,18 +336,17 @@ function DataTableOtherButton(id,tableid)
                     break;
                 //右邊新增一欄位
                 case "right_add":
-                    //(1.) 先取得目前所在欄位
-                    let trparent = Table.querySelector('thead tr');
-                    //(2.) 取得目前所在是第幾個
-                    //取得所有th
-                    let thparents = trparent.querySelectorAll('th');
-                    //目前是誰
-                    let thparent = target.parentElement.parentElement.parentElement.parentElement;
-                    //找出目前是第幾個
-                    const liIndex = Array.prototype.indexOf.call(thparents, thparent);
-
+                    //22.共用，尋找目前欄位是第幾個回傳
+                    let right_add_value = FindTableCospanIndex(Table,target);
                     //生成表格
-                    AddTableShow(Table,thparents,liIndex);
+                    AddTableShow(Table,right_add_value[0],right_add_value[1]);
+                    break;
+                //向右移動
+                case "right_move":
+                    //22.共用，尋找目前欄位是第幾個回傳
+                    let right_move_value = FindTableCospanIndex(Table,target);
+                    //23.向右移動欄位
+                    MoveRightShow(right_move_value);
                     break;
                 //移除
                 case "del_field":
@@ -466,7 +469,7 @@ function DataTableOtherButton(id,tableid)
 }
 
 //3.生成表頭
-function TableAddFieldTheader(thparents,liIndex)
+function TableAddFieldTheader(thparents,liIndex,status)
 {
     try {
         let theader_array = [];
@@ -474,17 +477,25 @@ function TableAddFieldTheader(thparents,liIndex)
 
         //每個資料都退1(需要處理幾次)
         let number = 0;
-        for(let i=0; i<Number(thparents.length + 1); i++)
+        let length = thparents.length;
+
+        if(status === 'add')
         {
             //th數量新增
+            length = Number(thparents.length + 1);
+        }
+
+        for(let i=0; i<length; i++)
+        {
             theader_array[i] = {"data": "t" + Number(i+1)};
+
             if( number == 0)
             {
                 //th名稱
                 const obj = {};
                 obj["name"] = thparents[i].querySelector('input').value;
                 theadername_array[i] = obj;
-                if(liIndex == i && number == 0)
+                if(liIndex == i && number == 0 && status === 'add')
                 {
                     //發生之後就不可以為0，因為添加資料都會讀前一比
                     number = thparents.length;
@@ -499,8 +510,19 @@ function TableAddFieldTheader(thparents,liIndex)
             }
         }
 
+        //如果是移動欄位
+        if(status === 'move')
+        {
+            //將標題對調
+            let td_first = theadername_array[liIndex];
+            let td_two = theadername_array[liIndex+1];
+            theadername_array[liIndex] = td_two;
+            theadername_array[liIndex+1] = td_first;
+        }
+
         newjson['theader'] = theader_array;
         newjson['theader_name'] = theadername_array;
+        console.log(newjson);
         return true;
     } catch (e) {
         console.error('表頭生成失敗，請檢查 TableAddFieldTheader()');
@@ -527,6 +549,61 @@ async function TableAddFieldRowTbody(Table,liIndex,position_array,status)
         let add_array = [];
         let add_td = [];
         let tbody_array = [];
+
+        //向右移動
+        if(status == "right_move")
+        {
+            console.log("向右移動");
+            console.log(TableTbodyData_array);
+            console.log(liIndex);
+            //(2.)假如現在要將第二欄移動到第三欄位，所以我要先保留 t2與t3，然後將兩資料對調
+            let first_index = liIndex;
+            let two_index = liIndex+1;
+            let td_frist = []; //t2
+            let td_two = []; //t3
+
+            //取得未移動前的資料
+            for(let i=0; i<TableTbodyData_array.length; i++)
+            {
+                for(let j=0; j<TableTbodyData_array[i].length; j++)
+                {
+                    if(j === first_index)
+                    {
+                        td_frist.push(TableTbodyData_array[i][j]);
+                    }
+
+                    if(j === two_index)
+                    {
+                        td_two.push(TableTbodyData_array[i][j]);
+                    }
+                }
+            }
+
+            console.log(td_frist);
+            console.log(td_two);
+
+            //更改目前的數值
+            for(let i=0; i<TableTbodyData_array.length; i++)
+            {
+                for(let j=0; j<TableTbodyData_array[i].length; j++)
+                {
+                    if(j === first_index)
+                    {
+                        TableTbodyData_array[i][j] = td_two[i];
+                    }
+
+                    if(j === two_index)
+                    {
+                        TableTbodyData_array[i][j] = td_frist[i];
+                    }
+                }
+            }
+
+            console.log("更改後");
+            console.log(TableTbodyData_array);
+
+
+        }
 
         //向下合併
         if(status == "rowspan_merge")
@@ -631,8 +708,6 @@ async function TableAddFieldRowTbody(Table,liIndex,position_array,status)
             }
         }
 
-
-
         //移除欄位使用
         if(status == 'del')
         {
@@ -698,7 +773,7 @@ async function TableAddFieldRowTbody(Table,liIndex,position_array,status)
             tbody_array[i] = obj;
         }
 
-        console.log("整理資料後");
+        console.log("＝＝＝整理資料後");
         console.log(TableTbodyData_array);
         newjson['tbody'] = tbody_array;
         return true
@@ -711,7 +786,7 @@ async function AddTableShow(Table,thparents,liIndex)
 {
     let promise1 = await new Promise((resolve,reject)=>{
         //生成表頭
-        let TableHeader = TableAddFieldTheader(thparents,liIndex);
+        let TableHeader = TableAddFieldTheader(thparents,liIndex,'add');
         if(TableHeader)
         {
             resolve('header_ok');
@@ -1714,3 +1789,146 @@ async function RowspanMerge(Table,position_array)
         console.log('測試模式開啟！請注意');
     });
 }
+
+//22.共用，尋找目前欄位是第幾個回傳
+function FindTableCospanIndex(Table,target)
+{
+    //(1.) 先取得目前所在欄位
+    let trparent = Table.querySelector('thead tr');
+    //(2.) 取得目前所在是第幾個
+    //取得所有th
+    let thparents = trparent.querySelectorAll('th');
+    //目前是誰
+    let thparent = target.parentElement.parentElement.parentElement.parentElement;
+    //找出目前是第幾個
+    const liIndex = Array.prototype.indexOf.call(thparents, thparent);
+
+    return  [thparents,liIndex,Table];
+}
+
+//23.向右移動欄位
+async function MoveRightShow(right_move_value){
+    //(1.)取得index是第幾位，如果是2 相關聯 td就是 t3
+    const thparents = right_move_value[0];
+    const liIndex = right_move_value[1];
+    //(2.)取得表格
+    let Table = right_move_value[2];
+    //(3.)判斷右邊移動是否是最右邊，如果是最後一欄位顯示提示，禁止右移動
+    //a.取得所有欄位數量
+    let Table_thead = Table.querySelector('thead');
+    let Table_th = Table_thead.querySelectorAll('th');
+    if( Table_th.length === liIndex+1 )
+    {
+        swal({
+            title: "此欄位為最後一欄！",
+            text: "無法再向右移動，請再次確認!",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+        })
+        .then((willDelete) => {
+
+        });
+    }
+    else{
+        let promise1 = await new Promise((resolve,reject)=>{
+            //生成表頭
+            let TableHeader = TableAddFieldTheader(thparents,liIndex,'move');
+            console.log("生成表頭");
+            console.log(TableHeader);
+            if(TableHeader)
+            {
+                resolve('header_ok');
+            }
+        });
+
+        let promise2 = await new Promise((resolve,reject)=>{
+            //生成內容
+            let TableBody = TableAddFieldRowTbody(Table,liIndex,'','right_move');
+            if(TableBody)
+            {
+                resolve('Finish');
+            }
+        });
+
+        let promise3 = await new Promise((resolve,reject)=>{
+            //測試功能
+            if(demotest_start)
+            {
+                //測試生成次數
+                if(demotest == 1)
+                {
+                    DataTableShow.destroy();
+                    TableDataShow('table_id',newjson,'backend');
+                    demotest = demotest - 1;
+                    resolve('json');
+                }
+            }
+            else
+            {
+                //生成表格(正式)
+                DataTableShow.destroy();
+                TableDataShow('table_id',newjson,'backend');
+            }
+        });
+
+        //測試功能：產生json(注意此為測試用)
+        let promise4 = await new Promise((resolve,reject)=>{
+            var currentData = DataTableShow.rows().data().toArray();
+            var jsonData = JSON.stringify(currentData);
+            console.log(jsonData);
+            console.log('測試模式開啟！請注意');
+        });
+    }
+
+}
+
+// async function AddTableShow(Table,thparents,liIndex)
+// {
+//     let promise1 = await new Promise((resolve,reject)=>{
+//         //生成表頭
+//         let TableHeader = TableAddFieldTheader(thparents,liIndex);
+//         if(TableHeader)
+//         {
+//             resolve('header_ok');
+//         }
+//     });
+
+//     let promise2 = await new Promise((resolve,reject)=>{
+//         //生成內容
+//         let TableBody = TableAddFieldRowTbody(Table,liIndex,'','add');
+//         if(TableBody)
+//         {
+//             resolve('Finish');
+//         }
+//     });
+
+//     let promise3 = await new Promise((resolve,reject)=>{
+//         //測試功能
+//         if(demotest_start)
+//         {
+//             //測試生成次數
+//             if(demotest == 1)
+//             {
+//                 DataTableShow.destroy();
+//                 TableDataShow('table_id',newjson,'backend');
+//                 demotest = demotest - 1;
+//                 resolve('json');
+//             }
+//         }
+//         else
+//         {
+//             //生成表格(正式)
+//             DataTableShow.destroy();
+//             TableDataShow('table_id',newjson,'backend');
+//         }
+//     });
+
+//     //測試功能：產生json(注意此為測試用)
+//     let promise4 = await new Promise((resolve,reject)=>{
+//         var currentData = DataTableShow.rows().data().toArray();
+//         var jsonData = JSON.stringify(currentData);
+//         console.log(jsonData);
+//         console.log('測試模式開啟！請注意');
+//     });
+// }
