@@ -88,23 +88,23 @@ let tbodymenuTool = `
             </button>
             <div class="dropdown-menu">
                 <button type="button" data-table="bottom_add" class="dropdown-item">
-                    <img src="./img/down-long-solid.svg" class="dropdown_righticon" alt="向下新增一列">
+                    <i class="bi bi-arrow-down-circle-fill text-primary mr-2"></i>
                     向下新增一列
                 </button>
                 <button type="button" data-table="colspan_merge" class="dropdown-item">
-                    <img src="./img/right-long-solid-green.svg" class="dropdown_colspanicon" alt="向右合併">
+                    <i class="bi bi-arrow-right-circle-fill text-success mr-2"></i>
                     向右合併
                 </button>
                 <button type="button" data-table="rowspan_merge" class="dropdown-item">
-                    <img src="./img/down-long-solid-green.svg" class="dropdown_righticon" alt="向下合併">
+                    <i class="bi bi-arrow-down-circle-fill text-success mr-2"></i>
                     向下合併
                 </button>
                 <button type="button" data-table="cancel_merge" class="dropdown-item">
-                    <img src="./img/xmark-solid.svg" class="dropdown_delicon" alt="取消合併">
+                    <i class="bi bi-x-circle text-danger mr-2"></i>
                     取消合併
                 </button>
                 <button type="button" data-table="del_column" class="dropdown-item text-danger">
-                    <img src="./img/xmark-solid.svg" class="dropdown_delicon" alt="移除此列">
+                    <i class="bi bi-x-circle-fill text-danger mr-2"></i>
                     移除此列
                 </button>
             </div>
@@ -192,11 +192,11 @@ function TableDataShow(id,json,status) {
             </button>
             <div class="dropdown-menu">
                 <button type="button" data-table="right_add" class="dropdown-item">
-                    <img src="./img/right-long-solid.svg" class="dropdown_righticon" alt="向右新增一欄">
+                    <i class="bi bi-arrow-right-circle-fill text-primary mr-2"></i>
                     向右新增一欄
                 </button>
                 <button type="button" data-table="del_field" class="dropdown-item">
-                    <img src="./img/xmark-solid.svg" class="dropdown_delicon" alt="移除此欄位">
+                    <i class="bi bi-x-circle-fill text-danger mr-2"></i>
                     移除此欄位
                 </button>
             </div>
@@ -1310,7 +1310,9 @@ function TDposition(Table,target)
     array['tr_index'] = tr_index;
     array['td_index'] = td_index;
 
+    console.log(array);
     return array;
+
 }
 
 //16.儲存格處理
