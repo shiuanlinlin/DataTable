@@ -336,9 +336,9 @@ function DataTableOtherButton()
             switch(dataTable)
             {
                 //產生json
-                case "json":
-                    DataTableJsonShow(Table);
-                    break;
+                //case "json":
+                    // DataTableJsonShow(Table);
+                //break;
                 //右邊新增一欄位
                 case "right_add":
                     //(1.) 先取得目前所在欄位
