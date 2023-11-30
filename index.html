@@ -25,17 +25,23 @@
 
     <h1>datatable表格套件</h1>
     <p>用陣列控制一切</p>
+    <!-- id需自行產生 -->
     <div id="TableTool">
         <div class="d-flex flex-row-reverse">
+             <!-- 新增按鈕可以自訂，但要包在id內 ;  新增按鈕的參數data-table="add_table"， 對應表格區塊的iddata-content="TableTool2" -->
             <button type="button" class="btn btn-success" data-table="add_table" data-content="TableTool">新增</button>
         </div>
+        <!-- 新增表格時，外面的框需要在一個id ，只要是因為不想改到主架構，只好再多加一個div id -->
         <div class="tableBox" id="tableBox">
+            <!-- 正式表格的位置 -->
             <table id="table_id" class="table border table-bordered DataTableStyle">
             </table>
         </div>
     </div>
+    <!-- id需自行產生 -->
     <div id="TableTool2">
         <div class="d-flex flex-row-reverse">
+            <!-- 新增按鈕可以自訂，但要包在id內 ;  新增按鈕的參數data-table="add_table"， 對應表格區塊的iddata-content="TableTool2" -->
             <button type="button" class="btn btn-success" data-table="add_table" data-content="TableTool2">新增</button>
         </div>
     </div>
@@ -87,6 +93,7 @@
    });
 
 
+   //載入頁面後新增的表格位置
     $(document).ready(function(){
         $.ajax({
             type: 'GET',
