@@ -18,7 +18,7 @@
         integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
     <link rel="stylesheet" href="css/Datatable_style.css">
     <script src="node_modules/sweetalert/dist/sweetalert.min.js"></script>
-    <script src="table_generateproject.js"></script>
+    <script src="table_generateproject_v2.js"></script>
 </head>
 
 <body class="p-5">
@@ -27,11 +27,91 @@
     <p>用陣列控制一切</p>
     <div id="TableTool">
         <div class="d-flex flex-row-reverse">
-            <button type="button" class="btn btn-secondary" data-table="json">產生json</button>
+            <button type="button" class="btn btn-success" data-table="add_table" data-content="TableTool">新增</button>
         </div>
-        <table id="table_id" class="table border table-bordered DataTableStyle">
-        </table>
+        <div class="tableBox" id="tableBox">
+            <table id="table_id" class="table border table-bordered DataTableStyle">
+            </table>
+        </div>
+    </div>
+    <div id="TableTool2">
+        <div class="d-flex flex-row-reverse">
+            <button type="button" class="btn btn-success" data-table="add_table" data-content="TableTool2">新增</button>
+        </div>
     </div>
 </body>
 
+<script>
+
+    //新增表格範例
+    //一開始一定要先給內容
+    //多個新增按鈕也沒問題喔
+   const add_table = document.querySelectorAll('[data-table="add_table"]');
+   add_table.forEach(item=>{
+    item.addEventListener('click',(event)=>{
+        //先找頁面上所有table數量來產生id
+        let tableAll = document.querySelectorAll('table');
+        let number_id = getDateNumber();
+        let table_id = 'table_'+tableAll.length+1+"_"+number_id;
+        //判斷找到區塊，用來加入表格
+        let target = event.target;
+        //取得id
+        let content = ('content' in target.dataset ) ? target.dataset.content : false;
+        if(content)
+        {
+            //抓到區塊
+            let ContentBox = document.getElementById(content);
+            if(ContentBox)
+            {
+                //生成外圍div
+                let tableBoxs = document.querySelectorAll('tableBox');
+                let new_tableBoxsid = 'tableBoxs_' + tableBoxs.length+1+"_"+number_id;
+
+                //生成表格
+                let tableTag = document.createElement('table');
+                tableTag.id = table_id;
+                tableTag.className = "table border table-bordered DataTableStyle";
+
+                //生成div
+                let divTag = document.createElement('div');
+                divTag.id = new_tableBoxsid;
+                divTag.append(tableTag);
+                ContentBox.append(divTag);
+
+                //1.生成表格(table id、表格json、後台用參數)
+                TableDataShow(table_id,jsonDataTable,'backend');
+            }
+        }
+
+    });
+   });
+
+
+    $(document).ready(function(){
+        $.ajax({
+            type: 'GET',
+            url: 'table.json',
+            success: function(data) {
+                //1.生成表格
+                TableDataShow('table_id',data,'backend');
+                //2.所有按鈕監聽
+                DataTableOtherButton();
+            },
+            error: function(error) {
+                console.log(error);
+            },
+        });
+    });
+
+
+    //生成13碼日期，來建立id唯一值
+    function getDateNumber()
+    {
+        const TodayNumber = new Date();
+        const TimeNumber = TodayNumber.getTime();
+        const number = TimeNumber.toString();
+        return number;
+    }
+
+</script>
 </html>
