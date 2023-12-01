@@ -342,7 +342,9 @@ function TableDataShow(id,json,status) {
         ColspanHtml(id);
     }
 
+
     setTimeout(function(){
+        console.log('處理合併表格');
         Loadrowspan(id,json);
     },1000);
 }
@@ -931,7 +933,7 @@ async function AddRowTableShow(Table,tbody_tr,tdposition,tr_index,td_index)
 
     let promise2 = await new Promise((resolve,reject)=>{
         //新增列表 - 處理內容
-        let TableBody = TableAddFieldRowTbody(Table,tr_index,'','row_add');
+        let TableBody = TableAddFieldRowTbody2(Table,tr_index,'','row_add');
         if(TableBody)
         {
             resolve('Finish');
@@ -1835,7 +1837,6 @@ function FindDatatable(id)
 //處理載入的合併表格問題
 function Loadrowspan(id,json)
 {
-    console.log('處理合併表格');
     console.log(json);
     const Table = document.getElementById(id);
     const Tbody = Table.querySelector('tbody');
@@ -1863,6 +1864,40 @@ function Loadrowspan(id,json)
     removeTd.forEach(item=>{
         item.remove();
     });
+
+}
+
+//新的向下新增一列效果
+function TableAddFieldRowTbody2(Table,liIndex,position_array,status)
+{
+    //1.首先取得所有資料
+    const Tables = Table;
+    const Tbody = Tables.querySelector('tbody');
+    let Tr = Tbody.querySelectorAll('tr');
+    let Tbody_array = [];
+    Tr.forEach(item=>{
+        let td_array = [];
+        let rowspan_array = [];
+        let Td = item.querySelectorAll('td');
+        Td.forEach((td_item,td_index)=>{
+            console.log(td_item);
+            if(td_item.rowSpan > 1)
+            {
+                rowspan_array.push({"rowspan":td_item.rowSpan,"rowspan_index":td_index+1});
+            }
+            td_array.push(td_item.querySelector('input').value);
+        });
+        if(rowspan_array.length > 0)
+        {
+            td_array['rowspan_array'] = rowspan_array;
+            rowspan_array = [];
+        }
+        Tbody_array.push(td_array);
+
+    });
+
+    //2.將 rowspan 合併格造成的缺欄位補齊
+    console.log(Tbody_array);
 
 }
 
