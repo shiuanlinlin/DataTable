@@ -222,6 +222,9 @@ function TableDataShow(id,json,status) {
 
     let indexjson = FindDatatable(id);
 
+    //紀錄移除項目
+    let del_td = [];
+
     //5.tbody產生( 搭配套件 DataTable )
     let DataTableFirst = $(`#${id}`).DataTable({
         data: json.tbody, //內容
@@ -242,54 +245,69 @@ function TableDataShow(id,json,status) {
             },
         }],
         //產生畫面之後作用
-        createdRow: function (row, data, dataIndex) {
+        // createdRow: function (row, data, dataIndex) {
+        //     //紀錄移除項目
+        //     // console.log("del_td");
+        //     // console.log(del_td);
+        //     // console.log(" dataIndex : "+ dataIndex);
 
-            //抓到下一行表格要再處理，清除不必要的欄位
-            if (rowspan_num != 0) {
-                $(row).find(`td:eq(${rowspan_index})`).remove();
-                //處理完成，不需要再處理縱列
-                rowspan_num = rowspan_num - 1;
-            }
+        //     if( del_td.length > 0 && del_td[dataIndex] && del_td[dataIndex].length > 0)
+        //     {
+        //         let array = [];
+        //         del_td[dataIndex].forEach((item,index)=>{
+        //             const First_del = item.index;
 
-            if (data.rowspan && data.rowspan > 1 && rowspan_num == 0) {
-                //1.先設定合併的縱列有幾個，在下一個tr處理完後結束工作
-                rowspan_num = data.rowspan - 1;
-                //2.判斷是第幾列需要合併
-                rowspan_index = data.rowspan_index - 1;
-                //3.將規則寫上去
-                $(row).find(`td:eq(${rowspan_index})`).attr('rowspan', data.rowspan);
-                $(row).find(`td:eq(${rowspan_index})`).attr('rowspan_index', data.rowspan_index);
+        //             console.log('你真的有找到嗎？');
+        //             console.log($(row).find(`td:eq(${First_del})`));
+        //             if($(row).find(`td:eq(${First_del})`).length > 0)
+        //             {
 
-                //4.如果有寫 class
-                if (data.class) {
-                    $(row).find(`td:eq(${rowspan_index})`).addClass(data.class);
-                }
+        //                 $(row).find(`td:eq(${First_del})`).remove();
+        //                 let remain  = (item.remain) - 1;
+        //                 if(remain > 0)
+        //                 {
+        //                     //紀錄移除項目
+        //                     array.push({"status":"rowspan","tr": dataIndex + 1 , "index": item.index , "remain": remain });
+        //                 }
+        //             }
 
-            }
+        //         });
+        //         //del_td.splice(dataIndex);
+        //         console.log('原先');
+        //         console.log(del_td[dataIndex]);
+        //         del_td[dataIndex+1] = array;
+        //         console.log('最後');
+        //         console.log(del_td);
+        //     }
 
-            //橫向合併
-            if (data.colspan && data.colspan > 1) {
-                //1.取得有多少 child
-                let td = row.children;
-                //2.計算是第幾個要處理
-                colspan_index = Number(data.colspan_index) - 1;
+        //     if(data.rowspan_array)
+        //     {
+        //         let array = [];
+        //         let rowspan_array = data.rowspan_array;
+        //         console.log(" dataIndex : "+ dataIndex);
+        //         rowspan_array.forEach((item,index)=>{
+        //             //1.取得合併是第幾格開始
+        //             const First = (item.rowspan_index) - 1;
+        //             //2.取得合併幾格
+        //             const Merge_num = item.rowspan;
+        //             //3.將規則寫上去
+        //             $(row).find(`td:eq(${First})`).attr('rowspan', Merge_num);
+        //             $(row).find(`td:eq(${First})`).attr('rowspan_index', item.rowspan_index);
 
-                //3.利用所有數量跑回圈
-                for (let i = 0; i < td.length; i++) {
-                    //找到需要設定的td或th
-                    if (i == colspan_index) {
-                        $(row).find(`td:eq(${i})`).attr('colspan', data.colspan);
-                        $(row).find(`td:eq(${i})`).attr('colspan_index', data.colspan_index);
-                        //4.如果有寫 class
-                        if (data.class) {
-                            $(row).find(`td:eq(${i})`).addClass(data.class);
-                        }
-                    }
+        //             //紀錄需要移除的 tr index 位置與次數
+        //             const del_index = dataIndex + 1;
+        //             //紀錄移除項目
+        //             array.push({"status":"rowspan","tr": del_index , "index": First , "remain": (Merge_num - 1) });
+        //             // status 合併的屬性 、 tr 下一個併 dataIndex 、 index 合併第幾個 、 remain 剩下還有幾個要合併
+        //             del_td[del_index] = array;
+        //         });
 
-                }
-            }
+        //         console.log("del_td創建");
+        //         console.log(del_td);
 
-        }
+        //     }
+
+        // }
     });
     //繪製
     DataTableFirst.draw();
@@ -323,6 +341,10 @@ function TableDataShow(id,json,status) {
     {
         ColspanHtml(id);
     }
+
+    setTimeout(function(){
+        Loadrowspan(id,json);
+    },1000);
 }
 
 function DataTableOtherButton()
@@ -1809,3 +1831,38 @@ function FindDatatable(id)
 
     return indexjson
 }
+
+//處理載入的合併表格問題
+function Loadrowspan(id,json)
+{
+    console.log('處理合併表格');
+    console.log(json);
+    const Table = document.getElementById(id);
+    const Tbody = Table.querySelector('tbody');
+    let tr = Tbody.querySelectorAll('tr');
+    json.tbody.forEach((item,index)=>{
+        if(item.rowspan_array)
+        {
+            let rowspan_array = item.rowspan_array;
+            for(let i=0; i<rowspan_array.length; i++)
+            {
+                //1.要合併的位置
+                const First = rowspan_array[i].rowspan_index - 1;
+                //2.要合併的格子數量
+                const rowspan = rowspan_array[i].rowspan;
+                tr[index].querySelectorAll('td')[First].rowSpan = rowspan;
+                //將要移除的表格添加 class
+                for (let j = 1; j < rowspan; j++) {
+                    tr[index+j].querySelectorAll('td')[First].classList.add('remove');
+                }
+            }
+        }
+    });
+
+    let removeTd = Table.querySelectorAll('.remove');
+    removeTd.forEach(item=>{
+        item.remove();
+    });
+
+}
+
