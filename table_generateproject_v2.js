@@ -1853,7 +1853,7 @@ async function AllTableJson()
     let tableBox = body.querySelectorAll('.DataTableStyle');
     for (const item of tableBox) {
         let tablejson = await DataTableJsonShow(item);
-        all_Tablejson.push({"theader_name": tablejson.theader_name, "theader": tablejson.theader, "tbody": tablejson.tbody});
+        all_Tablejson.push({"table_id": item.id,"theader_name": tablejson.theader_name, "theader": tablejson.theader, "tbody": tablejson.tbody});
     }
 
     console.log("所有輸出");
