@@ -65,6 +65,9 @@ let newjson = {
     "tbody": []
 };
 
+//全域
+let all_Tablejson = [];
+
 //全域表格
 let DataTableShow_all = [];
 
@@ -1239,16 +1242,36 @@ function TableTbodyData(Table)
 
 
 //12.輸出json
-function DataTableJsonShow(Table)
+async function DataTableJsonShow(Table)
 {
-    TableTHeadData(Table);
-    TableAddFieldRowTbody(Table,0);
-    //console.log(newjson);
-    return newjson
+    let array = [];
+
+    try {
+        await new Promise((resolve, reject) => {
+            if (TableTHeadData(Table)) {
+                resolve('ok');
+            }
+        });
+
+        await new Promise((resolve, reject) => {
+            if (TableAddFieldRowTbody(Table, 0)) {
+                resolve('ok');
+            }
+        });
+
+        console.log('輸出ok');
+        console.log(newjson);
+        array = newjson;
+
+        return array;
+    } catch (error) {
+        console.error('發生錯誤', error);
+        throw error;
+    }
 }
 
 //13.抓取表頭資料
-function TableTHeadData(Table)
+async function TableTHeadData(Table)
 {
     try {
         //取得目前是幾欄位
@@ -1753,7 +1776,6 @@ async function RowspanMerge(Table,position_array)
         {
             resolve('TableAddRowTheader_ok');
         }
-
     });
 
 
@@ -1819,20 +1841,20 @@ function FindDatatable(id)
     let indexjson = DataTableShow_all.filter(item=>{
         return item.id == id ? item : false;
     });
+
     return indexjson
 }
 
 //21.輸出所有表格json
-function AllTableJson()
+async function AllTableJson()
 {
-    let all_json = [];
     let body = document.querySelector('body');
     let tableBox = body.querySelectorAll('.DataTableStyle');
-    tableBox.forEach(item=>{
-        let tablejson = DataTableJsonShow(item);
-        all_json.push(tablejson);
-    });
+    for (const item of tableBox) {
+        let tablejson = await DataTableJsonShow(item);
+        all_Tablejson.push({"theader_name": tablejson.theader_name, "theader": tablejson.theader, "tbody": tablejson.tbody});
+    }
 
-
-    console.log(all_json);
+    console.log("所有輸出");
+    console.log(all_Tablejson);
 }
