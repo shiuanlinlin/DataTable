@@ -336,6 +336,11 @@ function DataTableOtherButton()
             switch(dataTable)
             {
                 //產生json
+                case "jsonall":
+                    //輸出所有Table json
+                    AllTableJson()
+                break;
+                //產生json
                 case "json":
                     //(1.) 先取得目前所在欄位
                     let jsonTable = target.dataset.tableid;
@@ -1238,7 +1243,7 @@ function DataTableJsonShow(Table)
 {
     TableTHeadData(Table);
     TableAddFieldRowTbody(Table,0);
-    console.log(newjson);
+    //console.log(newjson);
     return newjson
 }
 
@@ -1814,6 +1819,20 @@ function FindDatatable(id)
     let indexjson = DataTableShow_all.filter(item=>{
         return item.id == id ? item : false;
     });
-
     return indexjson
+}
+
+//21.輸出所有表格json
+function AllTableJson()
+{
+    let all_json = [];
+    let body = document.querySelector('body');
+    let tableBox = body.querySelectorAll('.DataTableStyle');
+    tableBox.forEach(item=>{
+        let tablejson = DataTableJsonShow(item);
+        all_json.push(tablejson);
+    });
+
+
+    console.log(all_json);
 }

@@ -25,6 +25,7 @@
 
     <h1>datatable表格套件</h1>
     <p>用陣列控制一切</p>
+    <button type="button" class="btn btn-success" data-table="jsonall">輸出所有表格json</button>
     <!-- id需自行產生 -->
     <div id="TableTool">
         <div class="d-flex flex-row-reverse">
@@ -32,7 +33,7 @@
             <button type="button" class="btn btn-success" data-table="add_table" data-content="TableTool">新增</button>
         </div>
         <!-- json輸出需要綁table id data-tableid="table_id" -->
-        <button type="button" class="btn btn-success" data-table="json" data-tableid="table_id">tableBox 輸出json </button>
+        <!-- <button type="button" class="btn btn-success" data-table="json" data-tableid="table_id">tableBox 輸出json </button> -->
         <div class="tableBox" id="tableBox">
             <!-- 正式表格的位置 -->
             <table id="table_id" class="table border table-bordered DataTableStyle">
