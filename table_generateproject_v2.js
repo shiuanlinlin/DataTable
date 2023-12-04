@@ -65,8 +65,7 @@ let newjson = {
     "tbody": []
 };
 
-//全域
-let all_Tablejson = [];
+
 
 //全域表格
 let DataTableShow_all = [];
@@ -1848,6 +1847,8 @@ function FindDatatable(id)
 //21.輸出所有表格json
 async function AllTableJson()
 {
+    //全域
+    let all_Tablejson = [];
     let body = document.querySelector('body');
     let tableBox = body.querySelectorAll('.DataTableStyle');
     for (const item of tableBox) {
