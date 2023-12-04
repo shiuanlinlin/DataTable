@@ -336,9 +336,12 @@ function DataTableOtherButton()
             switch(dataTable)
             {
                 //產生json
-                //case "json":
-                    // DataTableJsonShow(Table);
-                //break;
+                case "json":
+                    //(1.) 先取得目前所在欄位
+                    let jsonTable = target.dataset.tableid;
+                    let Table = document.getElementById(jsonTable);
+                    DataTableJsonShow(Table);
+                break;
                 //右邊新增一欄位
                 case "right_add":
                     //(1.) 先取得目前所在欄位
@@ -1246,6 +1249,11 @@ function TableTHeadData(Table)
         //取得目前是幾欄位
         let Thead = Table.querySelector('thead');
         let Thead_tr = Table.querySelectorAll('th');
+
+        //抓取資料
+        let indexjson = FindDatatable(Table.id);
+        let DataTableShow = indexjson[0].dataTable;
+
         let field = DataTableShow.columns().count();
         let theader_array = [];
         let theadername_array = [];

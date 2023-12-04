@@ -31,7 +31,8 @@
              <!-- 新增按鈕可以自訂，但要包在id內 ;  新增按鈕的參數data-table="add_table"， 對應表格區塊的iddata-content="TableTool2" -->
             <button type="button" class="btn btn-success" data-table="add_table" data-content="TableTool">新增</button>
         </div>
-        <!-- 新增表格時，外面的框需要在一個id ，只要是因為不想改到主架構，只好再多加一個div id -->
+        <!-- json輸出需要綁table id data-tableid="table_id" -->
+        <button type="button" class="btn btn-success" data-table="json" data-tableid="table_id">tableBox 輸出json </button>
         <div class="tableBox" id="tableBox">
             <!-- 正式表格的位置 -->
             <table id="table_id" class="table border table-bordered DataTableStyle">
