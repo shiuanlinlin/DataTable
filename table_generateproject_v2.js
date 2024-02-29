@@ -200,7 +200,7 @@ function TableDataShow(id,json,status) {
         if(status == 'backend')
         {
             theader_th += `
-                <th><div class="backend_menu"><input type="text" value="${item.name}">${menuTool}</div></th>
+                <th><div class="backend_menu"><textarea>${item.name}</textarea>${menuTool}</div></th>
             `;
         }
         if(status != 'backend')
@@ -239,7 +239,7 @@ function TableDataShow(id,json,status) {
                 //後台生成給予input
                 if(status == 'backend')
                 {
-                    $(td).html('<div class="backend_menu"><input type="text" value="' + cellData + '">'+tbodymenuTool+'</div>');
+                    $(td).html('<div class="backend_menu"><textarea>' + cellData + '</textarea>'+tbodymenuTool+'</div>');
                 }
             },
         }],
@@ -517,7 +517,7 @@ function TableAddFieldTheader(thparents,liIndex)
             {
                 //th名稱
                 const obj = {};
-                obj["name"] = thparents[i].querySelector('input').value;
+                obj["name"] = thparents[i].querySelector('textarea').value;
                 theadername_array[i] = obj;
                 if(liIndex == i && number == 0)
                 {
@@ -528,7 +528,7 @@ function TableAddFieldTheader(thparents,liIndex)
             {
                 //th名稱
                 const obj = {};
-                obj["name"] = thparents[i - 1].querySelector('input').value;
+                obj["name"] = thparents[i - 1].querySelector('textarea').value;
                 theadername_array[i] = obj;
                 number = number - 1;
             }
@@ -878,7 +878,7 @@ function TableDelFieldTheader(thparents,liIndex)
         //先存所有表頭內容
         for(let i=0; i<thparents.length;i++)
         {
-            delname.push(thparents[i].querySelector('input').value);
+            delname.push(thparents[i].querySelector('textarea').value);
         }
 
         //移除陣列
@@ -985,7 +985,7 @@ function TableAddRowTheader(Table)
 
         let j = 0;
         thead_td.forEach(item=>{
-            theadername_array[j] = {"name": item.querySelector('input').value};
+            theadername_array[j] = {"name": item.querySelector('textarea').value};
             j++
         });
 
@@ -1093,7 +1093,7 @@ function TableTbodyData(Table)
         for(let j=0; j<tbody_tr[i].querySelectorAll('td').length; j++)
         {
             let td_tab = tbody_tr[i].querySelectorAll('td')[j];
-            let td_value = td_tab.querySelector('input').value;
+            let td_value = td_tab.querySelector('textarea').value;
             td_array[j] = td_value;
         }
         tbody_tr_array[i] = td_array;
@@ -1290,7 +1290,7 @@ async function TableTHeadData(Table)
             //欄位數量回寫
             theader_array[i] = {"data": "t" + Number(i+1)};
             //th內容獲得
-            theadername_array[i] = {"name": Thead_tr[i].querySelector('input').value};
+            theadername_array[i] = {"name": Thead_tr[i].querySelector('textarea').value};
         }
 
         newjson['theader'] = theader_array;
@@ -1595,7 +1595,7 @@ function CancelMerge(Table,position_array)
         for(let i=0; i<colspan; i++)
         {
             let td_Tag = document.createElement('td');
-            let inpuHtml = `<div class="backend_menu"><input type="text" value="--">${tbodymenuTool}</div>`;
+            let inpuHtml = `<div class="backend_menu"><textarea></textarea>${tbodymenuTool}</div>`;
             td_Tag.innerHTML = inpuHtml;
             td_position.after(td_Tag);
         }
@@ -1614,7 +1614,7 @@ function CancelMerge(Table,position_array)
         for(let i=1; i<rowspan; i++)
         {
             let td_Tag = document.createElement('td');
-            let inpuHtml = `<div class="backend_menu"><input type="text" value="--">${tbodymenuTool}</div>`;
+            let inpuHtml = `<div class="backend_menu"><textarea></textarea>${tbodymenuTool}</div>`;
             td_Tag.innerHTML = inpuHtml;
             Tr[tr_index + i].querySelectorAll('td')[rowspan_index].before(td_Tag);
         }
@@ -1639,7 +1639,7 @@ function CancelMerge(Table,position_array)
         for(let j=0; j<colspan; j++)
         {
             let td_Tag = document.createElement('td');
-            let inpuHtml = `<div class="backend_menu"><input type="text" value="--">${tbodymenuTool}</div>`;
+            let inpuHtml = `<div class="backend_menu"><textare></textarea>${tbodymenuTool}</div>`;
             td_Tag.innerHTML = inpuHtml;
             td_position.after(td_Tag);
         }
@@ -1652,7 +1652,7 @@ function CancelMerge(Table,position_array)
             for(let j=0; j<colspan + 1; j++)
             {
                 let td_Tag = document.createElement('td');
-                let inpuHtml = `<div class="backend_menu"><input type="text" value="--">${tbodymenuTool}</div>`;
+                let inpuHtml = `<div class="backend_menu"><textarea></textarea>${tbodymenuTool}</div>`;
                 td_Tag.innerHTML = inpuHtml;
                 td_box.before(td_Tag);
             }

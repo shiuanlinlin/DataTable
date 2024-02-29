@@ -3,10 +3,11 @@
     th,td{
         padding: 0;
     }
-    th input,td input{
+    th input,td input,th textarea,td textarea{
         border: 0;
         width: 95%;
         padding: 0.75rem;
+        resize: none;
     }
     .backend_menu{
         display: flex;

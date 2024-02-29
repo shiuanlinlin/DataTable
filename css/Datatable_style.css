@@ -2,10 +2,11 @@
 .DataTableStyle th, .DataTableStyle td {
   padding: 0;
 }
-.DataTableStyle th input, .DataTableStyle td input {
+.DataTableStyle th input, .DataTableStyle td input, .DataTableStyle th textarea, .DataTableStyle td textarea {
   border: 0;
   width: 95%;
   padding: 0.75rem;
+  resize: none;
 }
 .DataTableStyle .backend_menu {
   display: flex;
