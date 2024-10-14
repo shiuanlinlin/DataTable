@@ -17,8 +17,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css"
         integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
     <link rel="stylesheet" href="css/Datatable_style.css">
-    <script src="node_modules/sweetalert/dist/sweetalert.min.js"></script>
-    <script src="table_generateproject_v2.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="table_generateproject_v2.js?v=2"></script>
 </head>
 
 <body class="p-5">
@@ -29,11 +29,13 @@
     <!-- id需自行產生 -->
     <div id="TableTool">
         <div class="d-flex flex-row-reverse">
-             <!-- 新增按鈕可以自訂，但要包在id內 ;  新增按鈕的參數data-table="add_table"， 對應表格區塊的iddata-content="TableTool2" -->
+            <!-- 新增按鈕可以自訂，但要包在id內 ;  新增按鈕的參數data-table="add_table"， 對應表格區塊的iddata-content="TableTool2" -->
             <button type="button" class="btn btn-success" data-table="add_table" data-content="TableTool">新增</button>
+            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addtableModal">新增表格</button>
         </div>
         <!-- json輸出需要綁table id data-tableid="table_id" -->
         <!-- <button type="button" class="btn btn-success" data-table="json" data-tableid="table_id">tableBox 輸出json </button> -->
+        <input type="text" class="form-control my-3" data-table="table_title" placeholder="請輸入表格名稱">
         <div class="tableBox" id="tableBox">
             <!-- 正式表格的位置 -->
             <table id="table_id" class="table border table-bordered DataTableStyle">
@@ -44,12 +46,90 @@
     <div id="TableTool2">
         <div class="d-flex flex-row-reverse">
             <!-- 新增按鈕可以自訂，但要包在id內 ;  新增按鈕的參數data-table="add_table"， 對應表格區塊的iddata-content="TableTool2" -->
-            <button type="button" class="btn btn-success" data-table="add_table" data-content="TableTool2">新增</button>
+            <!-- <button type="button" class="btn btn-success" data-table="add_table" data-content="TableTool2">新增</button> -->
+        </div>
+    </div>
+
+    <!-- 新增表格 -->
+    <div class="modal fade" id="addtableModal" tabindex="-1" aria-labelledby="addtableModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addtableModalLabel">新增表格</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="form-group">
+                        <label for="addfield-name" class="col-form-label">請輸入欄位:</label>
+                        <input type="number" class="form-control" id="addfield">
+                    </div>
+                    <div class="form-group">
+                        <label for="addlist" class="col-form-label">請輸入列數:</label>
+                        <input type="number" class="form-control" id="addlist">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" data-id="add_numbertable" data-content="TableTool">送出</button>
+            </div>
+            </div>
         </div>
     </div>
 </body>
 
 <script>
+
+    //新版的新增表格，可控制欄位、列數
+    const add_numberytable = document.querySelector('[data-id="add_numbertable"]');
+    if(add_numberytable)
+    {
+        add_numberytable.addEventListener('click',(event)=>{
+            //判斷找到區塊，用來加入表格
+            let target = event.target;
+            //取得id
+            let content = ('content' in target.dataset ) ? target.dataset.content : false;
+            if(content)
+            {
+                const addfield = document.getElementById('addfield');
+                const addlist = document.getElementById('addlist');
+
+                if(Number(addfield.value) > 0 && Number(addlist.value) > 0 )
+                {
+                    let newjsons = { theader: [],theader_name:[],tbody:[] };
+                    let field = Number(addfield.value);
+                    let list = Number(addlist.value);
+
+                    for(let i=0; i<field; i++)
+                    {
+                        newjsons['theader'][i] = {"data":`t${i+1}`};
+                        newjsons['theader_name'][i] = {"name":`標題${i+1}`};
+                    }
+
+                    for(let j=0; j<list; j++)
+                    {
+                        newjsons['tbody'][j] = {};
+
+                        for(let i=0; i<field; i++)
+                        {
+                            newjsons['tbody'][j][`t${i+1}`] = `內容${i+1}`;
+                        }
+                    }
+
+                    // const id = getDateNumber();
+                    const json = newjsons;
+                    // TableDataShow(id,json,'backend');
+
+                    //生成表格
+                    JsonTableShow(json,content);
+                }
+            }
+
+        });
+    }
 
     //新增表格範例
     //一開始一定要先給內容
@@ -75,6 +155,13 @@
                 let tableBoxs = document.querySelectorAll('tableBox');
                 let new_tableBoxsid = 'tableBoxs_' + tableBoxs.length+1+"_"+number_id;
 
+                //生成表格表題
+                let inputTag = document.createElement('input');
+                inputTag.type = 'text';
+                inputTag.className = "form-control my-3";
+                inputTag.dataset.title = "table_title";
+                inputTag.placeholder = "請輸入表格名稱";
+
                 //生成表格
                 let tableTag = document.createElement('table');
                 tableTag.id = table_id;
@@ -83,9 +170,11 @@
                 //生成div
                 let divTag = document.createElement('div');
                 divTag.id = new_tableBoxsid;
+                divTag.append(inputTag);
                 divTag.append(tableTag);
                 ContentBox.append(divTag);
 
+                console.log(jsonDataTable);
                 //1.生成表格(table id、表格json、後台用參數)
                 TableDataShow(table_id,jsonDataTable,'backend');
             }
@@ -93,6 +182,8 @@
 
     });
    });
+
+
 
 
    //載入頁面後新增的表格位置

@@ -155,6 +155,8 @@ let tbodymenuTool = `
 //OnlyRowspanArray(Table)
 //20.尋找目前的Datatable參數是第幾個
 //FindDatatable(id)
+//21.反向生成表格 json 轉一般標格(無合併功能，只有一般新增)
+//JsonTableShow(id,json);
 
 
 
@@ -376,25 +378,25 @@ function DataTableOtherButton()
                     let field = DataTableShow.columns().count();
                     if(field == 1)
                     {
-                        swal({
+                        Swal.fire({
                             title: "只剩下一欄位！無法移除",
                             text: "如需修改資料請操作表格上的功能",
                             icon: "warning",
-                            buttons: true,
-                            dangerMode: true,
+                            showCancelButton: false,     // 這裡設置為 false，因為你的舊版代碼中沒有顯示取消按鈕
+                            confirmButtonText: "確定",    // 設置確認按鈕的文本
                         });
                     }
                     else
                     {
-                        swal({
-                            title: "確認要移除此欄位?",
-                            text: "刪除此欄位包含下方資料將都被移除，請再次確認!",
+                        Swal.fire({
+                            title: "確認要移除此列?",
+                            text: "刪除此列包含整列資料將都被移除，請再次確認!",
                             icon: "warning",
-                            buttons: true,
-                            dangerMode: true,
-                        })
-                        .then((willDelete) => {
-                            if (willDelete) {
+                            showCancelButton: true,       // 顯示取消按鈕
+                            confirmButtonText: "確定",    // 確認按鈕的文本
+                            cancelButtonText: "取消",     // 取消按鈕的文本
+                        }).then((result) => {
+                            if (result.isConfirmed) {
 
                                 //(1.) 先取得目前所在欄位
                                 let trparent = del_thisTable.querySelector('thead tr');
@@ -440,25 +442,25 @@ function DataTableOtherButton()
                     let row_number = DataTableShows.rows().count();
                     if(row_number == 1)
                     {
-                        swal({
+                        Swal.fire({
                             title: "只剩下一列！無法移除",
                             text: "如需修改資料請操作表格上的功能",
                             icon: "warning",
-                            buttons: true,
-                            dangerMode: true,
+                            confirmButtonText: "確定",  // 按下確認按鈕的文本
+                            showCancelButton: false,    // 是否顯示取消按鈕，預設為 false
                         });
                     }
                     else
                     {
-                        swal({
+                        Swal.fire({
                             title: "確認要移除此列?",
                             text: "刪除此列包含整列資料將都被移除，請再次確認!",
                             icon: "warning",
-                            buttons: true,
-                            dangerMode: true,
-                        })
-                        .then((willDelete) => {
-                            if (willDelete) {
+                            showCancelButton: true,       // 顯示取消按鈕
+                            confirmButtonText: "確定",    // 確認按鈕的文本
+                            cancelButtonText: "取消",     // 取消按鈕的文本
+                        }).then((result) => {
+                            if (result.isConfirmed) {
 
                                 //(1.)取得目前所在td位置
                                 let tdposition = target.parentElement.parentElement.parentElement.parentElement;
@@ -1858,4 +1860,50 @@ async function AllTableJson()
 
     console.log("所有輸出");
     console.log(all_Tablejson);
+}
+
+//21.反向生成表格 json 轉一般標格(無合併功能，只有一般新增)
+//JsonTableShow(id,json);
+const JsonTableShow = (json,content) =>{
+    let ContentBox = document.getElementById(content);
+    if(ContentBox)
+    {
+        let number_id = getDateNumbers();
+        let table_id = `table_${number_id}`
+
+        //生成外圍div
+        let tableBoxs = document.querySelectorAll('tableBox');
+        const id = getDateNumbers();
+        let new_tableBoxsid = 'tableBoxs_' + id;
+
+        //生成表格表題
+        let inputTag = document.createElement('input');
+        inputTag.type = 'text';
+        inputTag.className = "form-control my-3";
+        inputTag.dataset.title = "table_title";
+        inputTag.placeholder = "請輸入表格名稱";
+
+        //生成表格
+        let tableTag = document.createElement('table');
+        tableTag.id = table_id;
+        tableTag.className = "table border table-bordered DataTableStyle";
+
+         //生成div
+         let divTag = document.createElement('div');
+         divTag.id = new_tableBoxsid;
+         divTag.append(inputTag);
+         divTag.append(tableTag);
+         ContentBox.append(divTag);
+
+         TableDataShow(table_id,json,'backend');
+    }
+}
+
+//生成13碼日期，來建立id唯一值
+const getDateNumbers = () =>{
+
+    const TodayNumber = new Date();
+    const TimeNumber = TodayNumber.getTime();
+    const number = TimeNumber.toString();
+    return number;
 }
