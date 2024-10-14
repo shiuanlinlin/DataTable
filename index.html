@@ -18,7 +18,7 @@
         integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
     <link rel="stylesheet" href="css/Datatable_style.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="table_generateproject_v2.js?v=2"></script>
+    <script src="table_generateproject_v2.js?v=3"></script>
 </head>
 
 <body class="p-5">
@@ -125,6 +125,8 @@
 
                     //生成表格
                     JsonTableShow(json,content);
+                    //2.所有按鈕監聽
+                    DataTableOtherButton();
                 }
             }
 
@@ -177,6 +179,8 @@
                 console.log(jsonDataTable);
                 //1.生成表格(table id、表格json、後台用參數)
                 TableDataShow(table_id,jsonDataTable,'backend');
+                //2.所有按鈕監聽
+                DataTableOtherButton();
             }
         }
 

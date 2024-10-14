@@ -20,9 +20,9 @@ let jsonDataTable =
     "tbody": [
         {
             "t1": "1",
-            "t2": "2",
+            "t2": {"value":2,"class":"text-left"}, //新加功能、靠左、靠右、置中
             "t3": "3",
-            "t4": "4"
+            "t4": "4",
         },
         {
             "t1": "5",
@@ -90,6 +90,18 @@ let tbodymenuTool = `
                 <img src="./img/ellipsis-vertical-solid.svg" class="dropdown_menuicon">
             </button>
             <div class="dropdown-menu">
+                <button type="button" data-table="text_center" class="dropdown-item">
+                    <i class="bi bi-arrow-down-circle-fill text-primary mr-2"></i>
+                    文字置中
+                </button>
+                <button type="button" data-table="text_left" class="dropdown-item">
+                    <i class="bi bi-arrow-down-circle-fill text-primary mr-2"></i>
+                    文字置左
+                </button>
+                <button type="button" data-table="text_right" class="dropdown-item">
+                    <i class="bi bi-arrow-down-circle-fill text-primary mr-2"></i>
+                    文字置右
+                </button>
                 <button type="button" data-table="bottom_add" class="dropdown-item">
                     <i class="bi bi-arrow-down-circle-fill text-primary mr-2"></i>
                     向下新增一列
@@ -241,7 +253,14 @@ function TableDataShow(id,json,status) {
                 //後台生成給予input
                 if(status == 'backend')
                 {
-                    $(td).html('<div class="backend_menu"><textarea>' + cellData + '</textarea>'+tbodymenuTool+'</div>');
+                    if(cellData.length > 0)
+                    {
+                        $(td).html('<div class="backend_menu"><textarea>' + cellData + '</textarea>'+tbodymenuTool+'</div>');
+                    }
+                    else{
+                        $(td).html('<div class="backend_menu"><textarea class='+ cellData.class +'>' + cellData.value + '</textarea>'+tbodymenuTool+'</div>');
+                    }
+
                 }
             },
         }],
@@ -431,6 +450,21 @@ function DataTableOtherButton()
                     const td_index = Array.prototype.indexOf.call(tbody_td, tdposition);
                     //新增列表
                     AddRowTableShow(badd_thisTable,tbody_tr,tdposition,tr_index,td_index);
+                    break;
+                //文字置中
+                case 'text_center':
+                    //文字靠哪邊
+                    TextCenter(target,'text-center');
+                    break;
+                //文字置左
+                case 'text_left':
+                    //文字靠哪邊
+                    TextCenter(target,'text-left');
+                    break;
+                //文字置右
+                case 'text_right':
+                    //文字靠哪邊
+                    TextCenter(target,'text-right');
                     break;
                 case 'del_column':
                     //取得目前是幾欄位
@@ -687,13 +721,21 @@ async function TableAddFieldRowTbody(Table,liIndex,position_array,status)
         //取得正常的 td 長度
         let length = newjson.theader.length;
 
+
         //整理資料
         for(let i=0; i<TableTbodyData_array.length; i++)
         {
             const obj = {};
             for(let j=0; j<TableTbodyData_array[i].length; j++)
             {
+
+
                 if(!TableTbodyData_array[i][j]['colspan'] && !TableTbodyData_array[i][j]['colspan_index'] && !TableTbodyData_array[i][j]['rowspan'] && !TableTbodyData_array[i][j]['rowspan_index'] && !TableTbodyData_array[i][j]['class'])
+                {
+                    const key = "t"+(j+1);
+                    obj[key] = TableTbodyData_array[i][j];
+                }
+                if(TableTbodyData_array[i][j].value != "")
                 {
                     const key = "t"+(j+1);
                     obj[key] = TableTbodyData_array[i][j];
@@ -1096,10 +1138,21 @@ function TableTbodyData(Table)
         {
             let td_tab = tbody_tr[i].querySelectorAll('td')[j];
             let td_value = td_tab.querySelector('textarea').value;
-            td_array[j] = td_value;
+            let td_class = td_tab.querySelector('textarea').className;
+
+            //寫入className
+            if(td_class != '')
+            {
+                td_array[j] = {"value":td_value,"class":td_class};
+            }
+            else{
+                td_array[j] = td_value;
+            }
         }
         tbody_tr_array[i] = td_array;
     }
+
+    console.log('tbody_tr_array',tbody_tr_array);
 
     //處理合併資料
     //取得資料後開始處理
@@ -1261,7 +1314,7 @@ async function DataTableJsonShow(Table)
         });
 
         console.log('輸出ok');
-        console.log(newjson);
+        //console.log(newjson);
         array = newjson;
 
         return array;
@@ -1897,6 +1950,24 @@ const JsonTableShow = (json,content) =>{
 
          TableDataShow(table_id,json,'backend');
     }
+}
+
+//文字置中、靠左、靠右
+const TextCenter = (target,status) =>{
+    //取得目前table id
+    let textcenter_thisTable = target.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement;
+    //(1.)取得目前所在td位置
+    let textcenter_tdposition = target.parentElement.parentElement.parentElement.parentElement;
+    //(2.)取得目前所在tr
+    let textcenter_trposition = textcenter_tdposition.parentElement;
+    //(3.) tr 是第幾個
+    let textcenter_tbody = textcenter_thisTable.querySelector('tbody');
+    let textcenter_tbody_tr = textcenter_tbody.querySelectorAll('tr');
+    const textcenter_tr_index = Array.prototype.indexOf.call(textcenter_tbody_tr, textcenter_trposition);
+    //(4.) td 是第幾個
+    let textcenter_tbody_td = textcenter_trposition.querySelectorAll('td');
+    const textcenter_td_index = Array.prototype.indexOf.call(textcenter_tbody_td, textcenter_tdposition);
+    textcenter_tbody_td[textcenter_td_index].querySelector('textarea').className = status;
 }
 
 //生成13碼日期，來建立id唯一值

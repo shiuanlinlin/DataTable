@@ -14,8 +14,8 @@
     "tbody": [
         {
             "t1": "測試測試\n123",
-            "t2": "2",
-            "t3": "3",
+            "t2": {"value":2,"class":"text-center"},
+            "t3": {"value":3,"class":"text-left"},
             "t4": "4"
         },
         {
@@ -25,8 +25,8 @@
             "t4": "8"
         },
         {
-            "t1": "9",
-            "t2": "10",
+            "t1": {"value":"9","class":"text-center"},
+            "t2": {"value":10,"class":"text-right"},
             "t3": "11",
             "t4": "12",
             "rowspan": "2",
