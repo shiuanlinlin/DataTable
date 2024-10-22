@@ -6,9 +6,9 @@
         { "data": "t4" }
     ],
     "theader_name": [
-        { "name": "層級" },
-        { "name": "人員" },
-        { "name": "經費" },
+        { "name": "層級","class":"text-right" },
+        { "name": "人員","class":"text-right" },
+        { "name": "經費","class":"text-right" },
         { "name": "空間" }
     ],
     "tbody": [
