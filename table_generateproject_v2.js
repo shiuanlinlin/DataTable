@@ -11,10 +11,10 @@ let jsonDataTable =
     ],
     //只要欄位有多少就要寫多少 ， 這是用來寫入th的內容
     "theader_name": [
-        { "name": "表格1" },
-        { "name": "表格2" },
-        { "name": "表格3" },
-        { "name": "表格4" }
+        { "name": "表格1","class":"text-right" },
+        { "name": "表格2","class":"text-center" },
+        { "name": "表格3","class":"text-right" },
+        { "name": "表格4","class":"text-right" }
     ],
     //列表顯示
     "tbody": [
@@ -192,6 +192,18 @@ function TableDataShow(id,json,status) {
                 <img src="./img/ellipsis-vertical-solid.svg" class="dropdown_menuicon">
             </button>
             <div class="dropdown-menu">
+                <button type="button" data-table="text_center" class="dropdown-item">
+                    <i class="bi bi-arrow-down-circle-fill text-primary mr-2"></i>
+                    文字置中
+                </button>
+                <button type="button" data-table="text_left" class="dropdown-item">
+                    <i class="bi bi-arrow-down-circle-fill text-primary mr-2"></i>
+                    文字置左
+                </button>
+                <button type="button" data-table="text_right" class="dropdown-item">
+                    <i class="bi bi-arrow-down-circle-fill text-primary mr-2"></i>
+                    文字置右
+                </button>
                 <button type="button" data-table="right_add" class="dropdown-item">
                     <i class="bi bi-arrow-right-circle-fill text-primary mr-2"></i>
                     向右新增一欄
@@ -214,7 +226,7 @@ function TableDataShow(id,json,status) {
         if(status == 'backend')
         {
             theader_th += `
-                <th><div class="backend_menu"><textarea>${item.name}</textarea>${menuTool}</div></th>
+                <th><div class="backend_menu"><textarea ${item.class ? `class="${item.class}"` : ''} >${item.name}</textarea>${menuTool}</div></th>
             `;
         }
         if(status != 'backend')
@@ -1152,8 +1164,6 @@ function TableTbodyData(Table)
         tbody_tr_array[i] = td_array;
     }
 
-    console.log('tbody_tr_array',tbody_tr_array);
-
     //處理合併資料
     //取得資料後開始處理
     //整合資訊
@@ -1346,6 +1356,11 @@ async function TableTHeadData(Table)
             theader_array[i] = {"data": "t" + Number(i+1)};
             //th內容獲得
             theadername_array[i] = {"name": Thead_tr[i].querySelector('textarea').value};
+            //th class取得
+            if(Thead_tr[i].querySelector('textarea').className)
+            {
+                theadername_array[i]['class'] = Thead_tr[i].querySelector('textarea').className;
+            }
         }
 
         newjson['theader'] = theader_array;
@@ -1966,8 +1981,22 @@ const TextCenter = (target,status) =>{
     const textcenter_tr_index = Array.prototype.indexOf.call(textcenter_tbody_tr, textcenter_trposition);
     //(4.) td 是第幾個
     let textcenter_tbody_td = textcenter_trposition.querySelectorAll('td');
-    const textcenter_td_index = Array.prototype.indexOf.call(textcenter_tbody_td, textcenter_tdposition);
-    textcenter_tbody_td[textcenter_td_index].querySelector('textarea').className = status;
+    let textcenter_thead = textcenter_trposition.querySelectorAll('th');
+    //如果是內容是td
+    if(textcenter_tbody_td.length > 0)
+    {
+        const textcenter_td_index = Array.prototype.indexOf.call(textcenter_tbody_td, textcenter_tdposition);
+        textcenter_tbody_td[textcenter_td_index].querySelector('textarea').className = status;
+    }
+
+    //標題對齊
+    if(textcenter_thead.length > 0)
+    {
+        //找目前位置
+        let thead_th = target.closest('th');
+        thead_th.querySelector('textarea').className = status;
+    }
+
 }
 
 //生成13碼日期，來建立id唯一值
